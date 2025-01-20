@@ -1,0 +1,22 @@
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 1.75rem;
+  right: 0;
+  z-index: 50;
+  display: none;
+  width: 150px;
+  background-color: #efede4;
+  color: #3d3d61;
+  box-shadow:
+    0 4px 6px -1px rgb(61 61 97 / 0.1),
+    0 2px 4px -2px rgb(61 61 97 / 0.1);
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}

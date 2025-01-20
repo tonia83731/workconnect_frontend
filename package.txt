@@ -1,0 +1,2 @@
+https://heroicons.com/solid
+https://unpkg.com/browse/@heroicons/vue@2.2.0/24/outline/
