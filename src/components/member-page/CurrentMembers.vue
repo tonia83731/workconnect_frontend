@@ -39,15 +39,16 @@ export default {
   <div class="flex flex-col gap-4">
     <button
       @click="handleToggle('current')"
-      class="w-full bg-purple text-white h-12 leading-12 px-4 font-bold flex justify-between items-center"
+      class="w-full text-white h-12 leading-12 px-4 font-bold flex justify-between items-center"
+      :class="currentToggle ? 'bg-ocean-teal' : 'bg-ocean-teal-60'"
     >
       <div class="">現有成員</div>
       <ChevronDownIcon class="w-4 h-4 transition" :class="currentToggle && 'rotate-180'" />
     </button>
-    <div class="bg-white text-purple shadow-md" v-if="currentToggle">
+    <div class="bg-white text-midnight-forest shadow-md" v-if="currentToggle">
       <div
         class="w-full h-12 px-4 text-sm flex justify-between items-center"
-        :class="index !== 0 && 'border-t border-gray-30'"
+        :class="index !== 0 && 'border-t border-muted-gray'"
         v-for="(member, index) in members"
         :key="`invited-member-${member._id}`"
       >
@@ -64,15 +65,15 @@ export default {
           <button
             @click="handleUpdatedAdmin(member._id, member.isAdmin)"
             :disabled="member._id === userId"
-            class="px-2 h-6 leading-6 rounded-sm disabled:bg-gray-30"
-            :class="member.isAdmin ? 'bg-tiffany-50' : 'bg-error'"
+            class="px-2 h-6 leading-6 rounded-sm disabled:bg-muted-gray"
+            :class="member.isAdmin ? 'bg-golder-amber' : 'bg-peach'"
           >
             {{ member.isAdmin ? '取消管理員' : '設為管理員' }}
           </button>
           <button
             @click="handleDeleteMember(member._id)"
             :disabled="member._id === userId"
-            class="px-2 h-6 leading-6 bg-gray-30 hover:bg-gray disabled:hover:bg-gray-30"
+            class="px-2 h-6 leading-6 bg-ocean-teal disabled:bg-muted-gray"
           >
             刪除成員
           </button>

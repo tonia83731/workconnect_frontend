@@ -11,7 +11,7 @@ type TodoBasicType = {
   }[]
 }
 
-type TodoFullType = TodoBasicType & {
+export type TodoFullType = TodoBasicType & {
   workfolderId?: string
   status: 'pending' | 'processing' | 'completed'
   note?: string
@@ -46,7 +46,11 @@ export const createdWorkspaceTodo = async (
   }
 }
 
-export const updatedTodo = async (workspaceId: string, todoId: string, payload: TodoFullType) => {
+export const updatedWorkspaceTodo = async (
+  workspaceId: string,
+  todoId: string,
+  payload: TodoFullType,
+) => {
   try {
     const url = TODO_URL(workspaceId) + `/${todoId}/update-todo`
     const response = await axiosAuthFetch('PUT', url, payload)
@@ -73,7 +77,11 @@ export const updatedTodoPosition = async (
   }
 }
 
-export const deleteTodo = async (workspaceId: string, workfolderId: string, todoId: string) => {
+export const deleteWorkspaceTodo = async (
+  workspaceId: string,
+  workfolderId: string,
+  todoId: string,
+) => {
   try {
     const url = TODO_URL(workspaceId) + `/${workfolderId}/${todoId}/delete-todo`
     const response = await axiosAuthFetch('DELETE', url)

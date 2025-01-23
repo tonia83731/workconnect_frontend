@@ -8,15 +8,13 @@ import {
   removeWorkspaceMembers,
   removeWrokspaceAdmin,
 } from '@/api/workspace'
-// import { getChatMessages } from '@/api/chat'
-// import { useAuthStore } from './auth'
-// import dayjs from 'dayjs'
 
 export type BucketData = {
   _id: string
   workspaceId: string
   title: string
   isPinned: boolean
+  folderCount: number
   createdAt: string
   updatedAt: string
 }
@@ -37,22 +35,6 @@ type MemberResponseData = {
     email: string
   }
 }
-
-// type MessageData = {
-//   _id: string
-//   workspaceId: string
-//   chatId: string
-//   senderId: {
-//     _id: string
-//     name: string
-//     email: string
-//   }
-//   text: string
-//   createdAt: string
-//   updatedAt: string
-//   isMe?: boolean
-//   time?: string
-// }
 
 export const useWorkspaceStore = defineStore(
   'workspace',

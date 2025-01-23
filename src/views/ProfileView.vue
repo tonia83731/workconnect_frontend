@@ -5,6 +5,7 @@ import { defineRule } from 'vee-validate'
 import DefaultLayout from '@/components/common/layout/DefaultLayout.vue'
 import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
 import { useAuthStore } from '@/stores/auth'
+import { input_class } from '@/data/input-style'
 
 export type RegisterInput = {
   name: string
@@ -21,7 +22,7 @@ export default {
   setup() {
     const authStore = useAuthStore()
     const { params } = useRoute()
-    const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
+    // const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
     const name = ref<string>('')
     const email = ref<string>('')
     const password = ref<string>('')
@@ -64,7 +65,7 @@ export default {
     )
 
     return {
-      input_class,
+      input_class: input_class(),
       name,
       email,
       password,
@@ -117,9 +118,14 @@ export default {
           /><ErrorMessage name="password" class="text-error text-sm" />
         </div>
       </div>
-      <button type="submit" class="bg-purple text-white w-full rounded-sm text-center py-1.5">
-        更新
-      </button>
+      <div class="flex justify-end">
+        <button
+          type="submit"
+          class="bg-midnight-forest text-white w-full md:w-1/3 rounded-sm text-center py-1.5"
+        >
+          更新
+        </button>
+      </div>
     </VForm>
   </DefaultLayout>
 </template>

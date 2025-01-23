@@ -61,11 +61,6 @@ export default {
     const authStore = useAuthStore()
     const workspaceStore = useWorkspaceStore()
     const chatStore = useChatStore()
-    // const label_class = 'text-purple font-medium'
-    // const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
-
-    // const bucketTitle = ref('')
-    // const bucketToggle = ref(false)
 
     const navToggle = ref(false)
     const todoBtn = {
@@ -152,10 +147,6 @@ export default {
     })
 
     return {
-      // label_class,
-      // input_class,
-      // bucketTitle,
-      // bucketToggle,
       workspaceId,
       todoBtn,
       navToggle,
@@ -174,10 +165,12 @@ export default {
 
 <template>
   <header
-    class="fixed top-0 left-0 bg-white shadow-md w-[250px] h-screen py-6 flex flex-col justify-between"
+    class="fixed top-0 left-0 bg-white text-midnight-forest shadow-md w-[250px] h-screen py-6 flex flex-col justify-between"
   >
     <div class="flex flex-col gap-8">
-      <RouterLink :to="`/workspace/${workspaceId}/todo`" class="font-bold text-xl text-purple pl-4"
+      <RouterLink
+        :to="`/workspace/${workspaceId}/todo`"
+        class="font-bold text-xl text-midnight-forest pl-4"
         >WORKCONNECT</RouterLink
       >
       <nav class="flex flex-col">
@@ -186,8 +179,8 @@ export default {
             @click="handleTodoListToggle"
             class="w-full px-4 py-2 flex justify-between items-center"
             :class="{
-              'bg-purple text-white': activeLink.currentPath.includes(todoBtn.href),
-              'bg-white text-purple': !activeLink.currentPath.includes(todoBtn.href),
+              'bg-midnight-forest text-white': activeLink.currentPath.includes(todoBtn.href),
+              'bg-white text-midnight-forest': !activeLink.currentPath.includes(todoBtn.href),
             }"
           >
             <div class="flex gap-2 items-center">
@@ -200,16 +193,8 @@ export default {
             <ChevronDownIcon class="w-4 h-4 transition" :class="navToggle && 'rotate-180'" />
           </button>
           <ul v-if="navToggle">
-            <!-- <li class="px-4 py-1">
-              <button
-                @click="handleBucketToggle"
-                class="px-4 py-1 w-full rounded-md border text-purple-30 border-purple-30 border-dashed flex justify-center items-center font-bold hover:border-purple hover:text-purple"
-              >
-                + 新增資料夾
-              </button>
-            </li> -->
             <li
-              class="pl-12 pr-4 py-1 flex items-center gap-1.5 hover:bg-purple-30"
+              class="pl-12 pr-4 py-1 flex items-center gap-1.5 hover:bg-midnight-forest-40"
               v-for="bucket in todoBtn.todobuckets"
               :key="bucket._id"
             >
@@ -217,8 +202,11 @@ export default {
                 bucket.title
               }}</RouterLink>
               <button>
-                <PinIcon v-if="bucket.isPinned" class="w-4 h-4 text-purple" />
-                <PinOutlineIcon v-else class="w-4 h-4 text-purple opacity-0 hover:opacity-100" />
+                <PinIcon v-if="bucket.isPinned" class="w-4 h-4 text-midnight-forest" />
+                <PinOutlineIcon
+                  v-else
+                  class="w-4 h-4 text-midnight-forest opacity-0 hover:opacity-100"
+                />
               </button>
             </li>
           </ul>
@@ -229,8 +217,8 @@ export default {
           :to="href"
           class="flex gap-2 items-center px-4 py-2"
           :class="{
-            'bg-purple text-white': activeLink.currentPath === href,
-            'bg-white text-purple': activeLink.currentPath !== href,
+            'bg-midnight-forest text-white': activeLink.currentPath === href,
+            'bg-white text-midnight-forest': activeLink.currentPath !== href,
           }"
         >
           <component :is="activeLink.currentPath === href ? icon_active : icon" class="w-6 h-6" />
@@ -253,7 +241,7 @@ export default {
     </div>
   </header>
   <main
-    class="w-[calc(100%-250px)] h-full max-h-screen overflow-y-auto overflow-x-hidden absolute top-0 left-[250px]"
+    class="w-[calc(100%-250px)] h-full max-h-screen overflow-y-auto overflow-x-hidden absolute top-0 left-[250px] bg-pale-aqua text-midnight-forest"
   >
     <div class="w-5/6 max-w-5xl mx-auto xl:w-full h-screen pt-12 pb-8 flex flex-col gap-8">
       <div class="flex items-center gap-2">

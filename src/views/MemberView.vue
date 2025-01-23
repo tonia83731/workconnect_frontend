@@ -7,6 +7,7 @@ import InvitedMembers from '@/components/member-page/InvitedMembers.vue'
 import CurrentMembers from '@/components/member-page/CurrentMembers.vue'
 import { toast } from 'vue3-toastify'
 import { useRoute } from 'vue-router'
+import { input_class } from '@/data/input-style'
 
 export default {
   components: {
@@ -18,8 +19,8 @@ export default {
     const workspaceStore = useWorkspaceStore()
     const { params } = useRoute()
     const { workspaceId } = params
-    const input_class =
-      'w-full h-9 px-4 py-1.5 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
+    // const input_class =
+    //   'w-full h-9 px-4 py-1.5 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
     const email = ref('')
     const addToggle = ref(false)
     const invitedToggle = ref(false)
@@ -95,7 +96,7 @@ export default {
     }
 
     return {
-      input_class,
+      input_class: input_class('h-9', 'bg-white'),
       email,
       members: workspaceStore.membersList,
       invites: workspaceStore.invitesList,
@@ -118,7 +119,7 @@ export default {
         <div class="w-full" :class="addToggle && 'grid grid-cols-[100px_1fr] gap-8'">
           <button
             @click="handleToggle('add-member')"
-            class="w-[100px] h-9 py-1 rounded-md border-2 text-purple border-purple border-dashed flex justify-center items-center font-bold hover:bg-purple-30"
+            class="w-[100px] h-9 py-1 rounded-md border-2 text-midnight-forest border-midnight-forest border-dashed flex justify-center items-center font-bold hover:border-none hover:bg-midnight-forest hover:text-white"
           >
             邀請成員
           </button>
@@ -140,7 +141,7 @@ export default {
                 />
                 <button
                   type="submit"
-                  class="bg-purple text-white w-[100px] h-9 rounded-sm text-center py-1.5"
+                  class="bg-midnight-forest text-white w-[100px] h-9 rounded-sm text-center py-1.5"
                 >
                   新增
                 </button>

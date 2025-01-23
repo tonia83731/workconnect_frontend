@@ -31,11 +31,11 @@ export default {
 <template>
   <RouterLink
     :to="`/workspace/${id}/todo`"
-    class="p-4 rounded-sm shadow-md bg-gypsum h-24 flex flex-col justify-between group hover:bg-teal-gray text-purple hover:text-white hover:shadow-lg"
+    class="p-4 rounded-sm shadow-md bg-pale-aqua h-24 flex flex-col justify-between group hover:bg-ocean-teal hover:text-white hover:shadow-lg"
   >
     <h5 class="font-bold text-lg">{{ title }}</h5>
     <div
-      class="flex justify-between gap-2 items-center text-sm text-gray-50 group-hover:text-white"
+      class="flex justify-between gap-2 items-center text-sm text-midnight-forest-60 group-hover:text-white"
     >
       <div class="flex items-center gap-1">
         {{ account }}

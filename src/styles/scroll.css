@@ -13,3 +13,16 @@
 .scroll::-webkit-scrollbar-thumb {
   background-color: rgb(85, 84, 92, 0.5);
 }
+
+.scroll-horizonal::-webkit-scrollbar {
+  height: 0px;
+}
+.scroll-horizonal:hover::-webkit-scrollbar {
+  height: 6px;
+}
+.scroll-horizonal::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+.scroll-horizonal::-webkit-scrollbar-thumb {
+  background-color: rgb(85, 84, 92, 0.5);
+}

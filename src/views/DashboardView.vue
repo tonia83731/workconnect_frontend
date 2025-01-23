@@ -13,6 +13,7 @@ import {
   rejectInvitations,
 } from '@/api/user'
 import { createdWorkspace } from '@/api/workspace'
+import { label_class, input_class } from '@/data/input-style'
 
 export type WorkspaceInput = {
   title: string
@@ -46,9 +47,6 @@ export default {
 
     const workspaces = ref<UserWorkspaceData[]>([])
     const invitations = ref<UserInvitationsData[]>([])
-
-    const label_class = 'text-purple font-medium'
-    const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
 
     const toggle = ref<boolean>(false)
     const title = ref('')
@@ -160,7 +158,7 @@ export default {
       workspaces,
       invitations,
       label_class,
-      input_class,
+      input_class: input_class(),
       handleCreatedWorkspace,
       handleModalToggle,
       handleConfirmInvitation,
@@ -179,7 +177,7 @@ export default {
       <div class="flex flex-col gap-4">
         <button
           @click="handleModalToggle"
-          class="px-4 py-2 rounded-md border-2 border-purple border-dashed text-purple h-12 flex justify-center items-center font-bold text-lg hover:bg-purple-30"
+          class="px-4 py-2 rounded-md h-12 flex justify-center items-center text-lg bg-midnight-forest-40 text-white hover:bg-midnight-forest hover:shadow-md hover:font-bold"
         >
           + 新增工作區
         </button>
@@ -196,18 +194,23 @@ export default {
       </div>
       <div class="flex flex-col gap-4">
         <div
-          class="px-4 py-2 bg-white text-purple shadow-lg h-12 flex justify-between items-center font-bold text-lg"
+          class="px-4 py-2 h-12 flex justify-between items-center font-bold text-lg"
+          :class="
+            invitations.length > 0
+              ? 'bg-golder-amber text-white shadow-lg'
+              : 'bg-white text-midnight-forest-40'
+          "
         >
           <p>邀請清單</p>
           <p
-            class="text-base font-medium bg-purple-50 text-white w-5 h-5 rounded-full flex justify-center items-center"
+            class="text-base font-medium bg-midnight-forest-40 text-white w-5 h-5 rounded-full flex justify-center items-center"
           >
             {{ invitations.length }}
           </p>
         </div>
         <div>
           <div
-            class="h-24 flex justify-center items-center text-purple-50"
+            class="h-24 flex justify-center items-center text-midnight-forest-40"
             v-if="invitations.length === 0"
           >
             目前無新邀請

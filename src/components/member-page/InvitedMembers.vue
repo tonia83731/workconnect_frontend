@@ -28,16 +28,17 @@ export default {
   <div class="flex flex-col gap-4">
     <button
       @click="handleToggle('invited')"
-      class="w-full bg-purple text-white h-12 leading-12 px-4 font-bold flex justify-between items-center"
+      class="w-full text-white h-12 leading-12 px-4 font-bold flex justify-between items-center"
+      :class="invitedToggle ? 'bg-ocean-teal' : 'bg-ocean-teal-60'"
     >
       <div class="">邀請中成員</div>
       <ChevronDownIcon class="w-4 h-4 transition" :class="invitedToggle && 'rotate-180'" />
     </button>
-    <div class="bg-white text-purple shadow-md flex flex-col" v-if="invitedToggle">
+    <div class="bg-white text-midnight-forest shadow-md flex flex-col" v-if="invitedToggle">
       <a
         v-for="(member, index) in invites"
         :key="`invited-member-${member}`"
-        :class="index !== 0 && 'border-t border-gray-30'"
+        :class="index !== 0 && 'border-t border-muted-gray'"
         :href="`mailto:${member}`"
         class="w-full h-9 leading-9 px-4 text-sm hover:underline hover:underline-offset-2"
         >{{ member }}</a

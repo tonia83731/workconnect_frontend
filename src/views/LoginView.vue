@@ -1,10 +1,12 @@
 <script lang="ts">
-import { login } from '@/api/auth'
 import { useForm } from 'vee-validate'
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { toast } from 'vue3-toastify'
 import Cookies from 'js-cookie'
+import { toast } from 'vue3-toastify'
+import { login } from '@/api/auth'
+import { useAuthStore } from '@/stores/auth'
+import { input_class } from '@/data/input-style'
 
 type LoginInput = {
   email: string
@@ -13,9 +15,9 @@ type LoginInput = {
 
 export default {
   setup() {
+    const authStore = useAuthStore()
     const router = useRouter()
     const { resetForm } = useForm()
-    const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
     const email = ref('')
     const password = ref('')
 
@@ -30,10 +32,12 @@ export default {
           return
         }
 
-        const token = data?.data.token
-        if (token) {
+        const { token, user } = data?.data
+        if (token && user) {
           Cookies.set('memberToken', token, { expires: 7, path: '/' })
           toast.success('登入成功，歡迎回來!')
+
+          authStore.updatedUser(user)
 
           setTimeout(() => {
             router.push(`/dashboard/${data?.data.user.id}`)
@@ -45,7 +49,7 @@ export default {
     }
 
     return {
-      input_class,
+      input_class: input_class(),
       email,
       password,
       handleFormSubmit,
@@ -57,17 +61,17 @@ export default {
 <template>
   <div class="flex flex-col gap-1">
     <h1 class="font-bold text-xl">WORKCONNECT | 歡迎回來-選擇登入</h1>
-    <p class="text-gray-50 text-base">
+    <p class="text-midnight-forest-40 text-base">
       沒有帳號? 前往<span
         ><RouterLink
           to="/auth/register"
-          class="hover:text-bold hover:underline hover:underline-offset-2 hover:text-gray"
+          class="hover:text-bold hover:underline hover:underline-offset-2 hover:text-midnight-forest"
           >註冊</RouterLink
         ></span
       >
     </p>
   </div>
-  <VForm @submit="handleFormSubmit" v-slot="{ errors }" class="flex flex-col gap-6">
+  <VForm @submit="handleFormSubmit" v-slot="{ errors }" class="flex flex-col gap-8">
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-0.5">
         <VField
@@ -92,7 +96,10 @@ export default {
         <ErrorMessage name="password" class="text-error text-sm" />
       </div>
     </div>
-    <button type="submit" class="bg-purple text-white w-full rounded-sm text-center py-1.5">
+    <button
+      type="submit"
+      class="bg-midnight-forest text-white w-full rounded-sm text-center py-1.5 hover:shadow-md hover:font-semibold"
+    >
       登入
     </button>
   </VForm>

@@ -73,7 +73,7 @@ export default {
 <template>
   <WorkspaceLayout mainTitle="討論室">
     <template #workspace>
-      <div class="w-full bg-gypsum p-4 flex flex-col gap-8">
+      <div class="w-full bg-soft-aqua p-4 flex flex-col gap-8">
         <div
           class="flex flex-col gap-4 py-4 overflow-x-hidden overflow-y-auto h-[60vh] max-h-[500px] scroll"
         >
@@ -90,13 +90,14 @@ export default {
         <div class="grid grid-cols-[4fr_0.5fr_0.5fr] gap-2">
           <input
             type="text"
-            class="placeholder:text-gray-50 w-full h-10 px-4 bg-white text-gray text-lg rounded-sm"
+            placeholder="請輸入訊息"
+            class="placeholder:text-sm text-midnight-forest placeholder:text-muted-gray w-full h-10 px-4 bg-white rounded-sm"
             name="message"
             v-model="text"
           />
           <div class="w-full h-10 flex justify-center items-center">
             <div class="relative">
-              <button @click="handleEmojiToggle" class="">
+              <button @click="handleEmojiToggle" class="text-midnight-forest">
                 <EmojiIcon class="w-6 h-6" />
               </button>
               <EmojiPicker
@@ -109,7 +110,7 @@ export default {
           </div>
           <button
             @click="handleMessageSend"
-            class="bg-purple rounded-sm flex justify-center items-center"
+            class="bg-midnight-forest rounded-sm flex justify-center items-center"
           >
             <SendArrowIcon class="w-6 h-6 text-white" />
           </button>

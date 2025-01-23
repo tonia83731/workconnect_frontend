@@ -41,7 +41,7 @@ export default {
 <template>
   <div
     v-if="toggle"
-    class="fixed top-0 left-0 z-[999] w-full h-screen bg-gray-30 flex justify-center items-center"
+    class="fixed top-0 left-0 z-[999] w-full h-screen bg-dark-60 flex justify-center items-center"
   >
     <div class="w-full h-screen relative">
       <div
@@ -49,12 +49,15 @@ export default {
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md w-1/2 max-h-[400px]"
       >
         <div class="flex justify-between items-center py-1 px-4">
-          <h5 class="text-lg font-bold">{{ title }}</h5>
-          <button @click="$emit('update:toggle', false)" class="text-gray-50 hover:text-gray">
+          <h5 class="text-lg font-bold text-midnight-forest">{{ title }}</h5>
+          <button
+            @click="$emit('update:toggle', false)"
+            class="text-muted-gray-60 hover:text-muted-gray"
+          >
             <CrossIcon class="w-5 h-5" />
           </button>
         </div>
-        <div class="px-4 py-2 h-full max-h-[360px] overflow-y-auto overflow-x-hidden">
+        <div class="px-4 py-2 h-full max-h-[360px] overflow-y-auto overflow-x-hidden scroll">
           <slot name="modal"></slot>
           <RouterView />
         </div>

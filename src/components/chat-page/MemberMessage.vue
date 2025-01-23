@@ -28,13 +28,13 @@ export default {
 <template>
   <div class="w-full flex justify-end" v-if="isMe">
     <div class="flex items-end gap-2">
-      <div class="rounded-xl rounded-br-none bg-teal-blue px-4 py-1">
+      <div class="rounded-xl rounded-br-none bg-light-amber border border-golder-amber px-4 py-1">
         <p>{{ text }}</p>
         <p class="text-xs">{{ time }}</p>
       </div>
       <div
         :title="sender"
-        class="bg-teal-gray-30 text-white text-2xl font-bold w-9 h-9 rounded-full flex justify-center items-center"
+        class="bg-golder-amber text-white text-2xl font-bold w-9 h-9 rounded-full flex justify-center items-center"
       >
         {{ sender ? sender[0] : '' }}
       </div>
@@ -44,11 +44,11 @@ export default {
     <div class="flex items-end gap-2">
       <div
         :title="sender"
-        class="bg-teal-gray-30 text-white text-2xl font-bold w-9 h-9 rounded-full flex justify-center items-center"
+        class="text-white bg-peach text-2xl font-bold w-9 h-9 rounded-full flex justify-center items-center"
       >
         {{ sender ? sender[0] : '' }}
       </div>
-      <div class="rounded-xl rounded-br-none bg-taro px-4 py-1">
+      <div class="rounded-xl rounded-br-none bg-light-peach border border-peach px-4 py-1">
         <p>{{ text }}</p>
         <p class="text-xs">{{ time }}</p>
       </div>

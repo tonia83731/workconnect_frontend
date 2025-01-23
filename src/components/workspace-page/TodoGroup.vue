@@ -1,101 +1,136 @@
 <script lang="ts">
-import { ref } from 'vue'
+import { ref, type PropType } from 'vue'
+import { useRoute } from 'vue-router'
+import VueDatePicker from '@vuepic/vue-datepicker'
+import Multiselect from 'vue-multiselect'
+import { toast } from 'vue3-toastify'
+import { type TodoFullType } from '@/api/todo'
+import { useWorkspaceStore } from '@/stores/workspace'
+import { useTodoStore, type TodoType } from '@/stores/todos'
+import { formatedTime, formatedTimeToTimestamp } from '@/helpers/formatedTime'
 import TodoItem from './TodoItem.vue'
-import TrashIcon from '@/components/icons/TrashIcon.vue'
+import TrashIcon from '../icons/TrashIcon.vue'
+import PencilEditIcon from '../icons/PencilEditIcon.vue'
+
+type AssignmentSelectType = {
+  id: string
+  name: string
+}
 
 export default {
-  components: { TodoItem, TrashIcon },
+  components: {
+    TrashIcon,
+    PencilEditIcon,
+    VueDatePicker,
+    Multiselect,
+    TodoItem,
+  },
   props: {
     id: {
-      type: Number,
+      type: String,
+      required: true,
     },
     title: {
       type: String,
     },
+    todos: {
+      type: Array as PropType<TodoType[]>,
+      required: true,
+    },
   },
   setup(props, { emit }) {
-    const input_class = 'w-full h-12 px-4 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
-    const todoGroup = ref({
-      id: 1,
-      title: 'Todo 1',
-      innerFile: [
-        {
-          id: 1,
-          title: 'Task 1',
-          assign: ['Member1', 'Member2'], // Members assigned to the task
-          status: 'pending', // Options: pending, processing, complete
-          note: 'This is a note for task 1',
-          checklist: [
-            { id: 1, text: 'Check item 1', isChecked: false },
-            { id: 2, text: 'Check item 2', isChecked: true },
-          ],
-          deadline: '2025-01-10', // Example deadline
-        },
-        {
-          id: 2,
-          title: 'Task 2',
-          assign: ['Member3'],
-          status: 'processing',
-          note: 'This is a note for task 2',
-          checklist: [
-            { id: 1, text: 'Check item A', isChecked: true },
-            { id: 2, text: 'Check item B', isChecked: false },
-          ],
-          deadline: '2025-01-15',
-        },
-      ],
-    })
-    const GroupTitle = ref('Todo 1')
-    const todoToggle = ref(false)
+    const { params } = useRoute()
+    const workspaceId = params.workspaceId as string
+    const workspaceStore = useWorkspaceStore()
+    const todoStore = useTodoStore()
+
+    const folderTitle = ref(props.title)
+    const foldertodoToggle = ref(false)
 
     const todoTitle = ref('')
-    const todoAssign = ref([])
-    const todoDeadline = ref('')
+    const todoAssignment = ref<AssignmentSelectType[]>([])
+    const todoDeadline = ref(null)
 
-    const assignOptions = ref([
-      'Select option',
-      'options',
-      'selected',
-      'mulitple',
-      'label',
-      'searchable',
-      'clearOnSelect',
-      'hideSelected',
-      'maxHeight',
-      'allowEmpty',
-      'showLabels',
-      'onChange',
-      'touched',
-    ])
-
-    const handleDeleteGroup = () => {
-      emit('delete-group', props.id)
+    const initializedTodoData = () => {
+      todoTitle.value = ''
+      todoAssignment.value = []
+      todoDeadline.value = null
     }
 
-    const handleTodoGroupToggle = () => {
-      todoToggle.value = !todoToggle.value
-    }
-    const handleTodoGroupCreated = (value: { todoTitle: string }) => {
-      const body = {
-        title: value.todoTitle,
-        deadline: todoDeadline.value,
-        assign: todoAssign.value,
+    const handleCreatedTodoToggle = () => {
+      if (foldertodoToggle.value) {
+        initializedTodoData()
       }
-      console.log(body)
+      foldertodoToggle.value = !foldertodoToggle.value
     }
+
+    const handleCreatedTodo = async () => {
+      if (todoTitle.value === '') return
+      const assignments = todoAssignment.value.map((assign) => ({
+        userId: assign.id,
+      }))
+
+      // const date = todoDeadline.value ? new Date(todoDeadline.value) : new Date()
+      // date.setHours(23, 59, 59, 999)
+      // const timestamp = date.getTime()
+
+      const timestamp = formatedTimeToTimestamp(todoDeadline.value)
+
+      const body = {
+        title: todoTitle.value,
+        ...(todoDeadline.value ? { deadline: timestamp } : {}),
+        ...(assignments.length > 0 ? { assignments: assignments } : {}),
+      }
+
+      const result = await todoStore.addedTodo(workspaceId, props.id as string, body)
+
+      if (!result?.success) {
+        toast.error(result?.message)
+        return
+      }
+
+      initializedTodoData()
+      foldertodoToggle.value = false
+    }
+
+    const handleEditTodo = async (todoId: string, body: TodoFullType) => {
+      await todoStore.updatedTodo(workspaceId, todoId, body)
+    }
+    const handleDeleteTodo = async (todoId: string) => {
+      await todoStore.deletedTodo(workspaceId, props.id, todoId)
+    }
+
+    const handleUpdatedFolder = () => {
+      if (props.title === folderTitle.value) return
+      emit('update-folder', props.id, folderTitle.value)
+    }
+    const handleDeleteFolder = () => {
+      emit('delete-folder', props.id)
+    }
+
+    // -------------------- MULTISELECT OPTIONS --------------------
+    const memberOptions = workspaceStore.membersList.map((member) => ({
+      id: member._id,
+      name: member.name,
+    }))
 
     return {
-      input_class,
-      todoGroup,
-      handleDeleteGroup,
-      GroupTitle,
-      todoToggle,
+      folderTitle,
+      folderTodos: props.todos,
+      member: memberOptions,
+      todoToggle: foldertodoToggle,
+
       todoTitle,
-      todoAssign,
-      assignOptions,
+      todoAssignment,
       todoDeadline,
-      handleTodoGroupToggle,
-      handleTodoGroupCreated,
+
+      formatedTime,
+      handleUpdatedFolder,
+      handleDeleteFolder,
+      handleCreatedTodoToggle,
+      handleCreatedTodo,
+      handleEditTodo,
+      handleDeleteTodo,
       ...props,
     }
   },
@@ -103,89 +138,87 @@ export default {
 </script>
 
 <template>
-  <div class="w-full flex flex-col gap-4">
-    <div
-      class="h-10 px-2 bg-gypsum text-purple shadow-md group flex justify-between gap-2 items-center"
-    >
-      <input
-        type="text"
-        class="h-10 bg-transparent focus:border-b focus:border-purple"
-        placeholder="請輸入群組標題"
-        v-model="GroupTitle"
-      />
-      <!-- @blur -->
-      <button @click="handleDeleteGroup" class="hidden group-hover:block">
+  <div class="flex flex-col gap-4">
+    <div class="relative bg-white h-10 px-2 flex justify-between items-center">
+      <label :for="id" class="group flex items-center gap-1">
+        <PencilEditIcon class="w-4 h-4 group-focus-within:block hidden" />
+        <input
+          :id="id"
+          type="text"
+          v-model="folderTitle"
+          placeholder="請輸入群組名稱"
+          class="bg-transparent w-[210px] focus:border-b focus:border-midnight-forest"
+          @blur="handleUpdatedFolder"
+        />
+      </label>
+      <button @click="handleDeleteFolder" class="text-midnight-forest opacity-0 hover:opacity-100">
         <TrashIcon class="w-4 h-4" />
       </button>
     </div>
-    <div
-      class="h-full max-h-[300px] scroll overflow-y-auto overflow-x-hidden hover:pr-4 flex flex-col gap-2"
-    >
-      <!-- 新增代辦事項 & 新增Form -->
+    <div class="flex flex-col gap-4">
+      <!-- 新增代辦事項 -->
       <div class="flex flex-col gap-2">
         <button
-          @click="handleTodoGroupToggle"
-          class="h-10 px-2 border border-dashed border-gypsum text-gypsum rounded-sm hover:border-purple hover:text-purple"
+          @click="handleCreatedTodoToggle"
+          class="px-4 h-10 w-full rounded-md border text-ocean-teal-60 border-ocean-teal-60 border-dashed flex justify-center items-center font-bold hover:border-ocean-teal hover:text-ocean-teal"
         >
           + 新增代辦事項
         </button>
-        <VForm
-          v-if="todoToggle"
-          class="bg-white shadow-md"
-          v-slot="{ errors }"
-          @submit="handleTodoGroupCreated"
-        >
-          <div class="p-2 flex flex-col gap-2">
-            <!-- TITLE -->
-            <div class="flex flex-col gap-0.5">
-              <VField
-                name="todoTitle"
-                type="string"
-                rules="required|max:20"
-                placeholder="TODO TITLE"
-                v-model="todoTitle"
-                class="w-full h-8 px-4 rounded-sm text-purple placeholder:text-gray-50 focus:border-b focus:border-gray-50"
-                :class="{ 'border-b border-error': errors.todoTitle }"
-              />
-              <ErrorMessage name="todoTitle" class="text-error text-xs" />
+        <div v-if="todoToggle" class="bg-white">
+          <div class="px-4 py-2 flex flex-col gap-2">
+            <!-- title -->
+            <input
+              v-model="todoTitle"
+              type="text"
+              class="w-full h-10 px-2 bg-transparent focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"
+              placeholder="輸入代辦事項"
+            />
+            <div class="flex flex-col gap-1">
+              <!-- deadline -->
+              <VueDatePicker v-model="todoDeadline" :minDate="new Date()" :enableTimePicker="false">
+                <template #trigger>
+                  <div
+                    class="w-full h-[43px] leading-10 px-2 rounded-[5px] bg-white border border-[#e5e7eb]"
+                    :class="todoDeadline ? 'text-midnight-forest' : 'text-muted-gray text-sm'"
+                  >
+                    {{ formatedTime(todoDeadline) || '請輸入截止日期' }}
+                  </div>
+                </template>
+              </VueDatePicker>
+              <!-- assignment -->
+              <Multiselect
+                v-model="todoAssignment"
+                track-by="id"
+                label="name"
+                :options="member"
+                :multiple="true"
+                placeholder="請指派人選"
+                class="bg-transparent"
+              >
+              </Multiselect>
             </div>
-            <!-- DEADLINE -->
-            <VueDatePicker
-              v-model="todoDeadline"
-              :teleport="true"
-              :enableTime="false"
-              placeholder="DEADLINE"
-            >
-              <template #input-icon>
-                <!--Empty to remove icon or place new SVG here -->
-              </template>
-            </VueDatePicker>
-            <!-- ASSIGN -->
-            <VMultiSelect
-              :options="assignOptions"
-              :multiple="true"
-              :max="3"
-              v-model="todoAssign"
-              placeholder="ASSIGN TO"
-            >
-            </VMultiSelect>
           </div>
-          <div class="grid grid-cols-[1fr_1.5fr] h-6 text-white">
-            <button type="button" class="bg-gray-30">取消</button>
-            <button type="submit" class="bg-purple">建立</button>
-          </div>
-        </VForm>
+          <button @click="handleCreatedTodo" class="w-full h-8 bg-ocean-teal text-white">
+            新增
+          </button>
+        </div>
       </div>
-      <!-- 代辦事項列表 -->
-      <TodoItem
-        v-for="todo in todoGroup.innerFile"
-        :key="todo.id"
-        :id="todo.id"
-        :title="todo.title"
-        :status="todo.status"
-        :deadline="todo.deadline"
-        :checklist="todo.checklist"
-      />
+      <!-- 代辦事項 -->
+      <div class="scroll overflow-y-auto h-[480px] flex flex-col gap-2">
+        <TodoItem
+          v-for="todo in todos"
+          :key="todo._id"
+          :id="todo._id"
+          :title="todo.title"
+          :status="todo.status"
+          :checklists="todo.checklists"
+          :assignments="todo.assignments"
+          :deadline="todo.deadline"
+          @edit-todo="handleEditTodo"
+          @delete-todo="handleDeleteTodo"
+        />
+      </div>
     </div>
   </div>
 </template>
+<style></style>

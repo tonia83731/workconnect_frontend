@@ -22,6 +22,11 @@ export const useAuthStore = defineStore(
     const userId = ref<string | null>(null)
     const user = ref<UserProfileData | null>(null)
 
+    const updatedUser = (userData: UserProfileData) => {
+      user.value = userData
+      userId.value = userData.id
+    }
+
     const fetchCheckedAuthentication = async () => {
       try {
         const data = await checkedAuthentication()
@@ -83,6 +88,7 @@ export const useAuthStore = defineStore(
       fetchUserProfile,
       handleUpdatedProfile,
       handleLogout,
+      updatedUser,
     }
   },
   {
