@@ -22,9 +22,9 @@ export type TodoFullType = TodoBasicType & {
   order?: number
 }
 
-export const getWorkspaceTodo = async (workspaceId: string, todoId: string) => {
+export const getWorkbucketTodos = async (workbucketId: string) => {
   try {
-    const url = TODO_URL(workspaceId) + `/${todoId}`
+    const url = `/todo/${workbucketId}/bucket-todos`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
@@ -32,13 +32,19 @@ export const getWorkspaceTodo = async (workspaceId: string, todoId: string) => {
   }
 }
 
-export const createdWorkspaceTodo = async (
-  workspaceId: string,
-  workfolderId: string,
-  payload: TodoBasicType,
-) => {
+export const getWorkspaceTodo = async (todoId: string) => {
   try {
-    const url = TODO_URL(workspaceId) + `/${workfolderId}/create-todo`
+    const url = `/todo/${todoId}/todo-item`
+    const response = await axiosAuthFetch('GET', url)
+    return response?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const createdWorkspaceTodo = async (workfolderId: string, payload: TodoBasicType) => {
+  try {
+    const url = `/todo/${workfolderId}/create-todo`
     const response = await axiosAuthFetch('POST', url, payload)
     return response?.data
   } catch (error) {

@@ -3,7 +3,8 @@ import { reactive } from 'vue'
 import {
   createdWorkspaceFolder,
   deleteWorkspaceFolder,
-  getWorkspaceFoldersWithTodos,
+  getWorkspaceFolders,
+  // getWorkspaceFoldersWithTodos,
   updatedWorkspaceFolderTitle,
 } from '@/api/workfolder'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
@@ -14,7 +15,7 @@ type WorkfolderType = {
   workspaceId: string
   workbucketId: string
   title: string
-  todos: string[]
+  // todos: string[]
   order: number
   createdAt: string
   updatedAt: string
@@ -33,7 +34,7 @@ export default {
   methods: {
     async fecthWorkfolders(bucketId: string) {
       try {
-        const res = await getWorkspaceFoldersWithTodos(bucketId)
+        const res = await getWorkspaceFolders(bucketId)
 
         if (res?.success) {
           const data = res?.data
