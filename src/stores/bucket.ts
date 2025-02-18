@@ -19,6 +19,7 @@ export const useBucketStore = defineStore('bucket', {
       buckets: [],
       pinnedBuckets: [],
     }) as BucketStateProps,
+  persist: true,
   actions: {
     updatedBuckets(buckets: BucketProps[]) {
       this.buckets = buckets

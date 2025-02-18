@@ -1,113 +1,134 @@
 <script lang="ts">
-import { computed, onMounted, reactive, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import { useTodoStore } from '@/stores/todos'
+import { reactive } from 'vue'
+import {
+  createdWorkspaceFolder,
+  deleteWorkspaceFolder,
+  getWorkspaceFoldersWithTodos,
+  updatedWorkspaceFolderTitle,
+} from '@/api/workfolder'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
-import TodoGroup from '@/components/workspace-page/TodoGroup.vue'
-import { getWorkspaceBucket } from '@/api/workbucket'
+import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
+
+type WorkfolderType = {
+  _id: string
+  workspaceId: string
+  workbucketId: string
+  title: string
+  todos: string[]
+  order: number
+  createdAt: string
+  updatedAt: string
+}
 
 export default {
   components: {
     WorkspaceLayout,
-    TodoGroup,
+    TodoFolder,
   },
-  setup() {
-    const todoStore = useTodoStore()
-    const route = useRoute()
-
-    const workspaceId = route.params.workspaceId as string
-    const bucketId = computed(() => route.params.bucketId)
-
-    const bucketTitle = reactive({ value: '' })
-
-    // ------------------------ ABOUT FOLDERS ------------------------
-    const handleAddedFolder = async () => {
-      const body = {
-        workbucketId: String(bucketId.value),
-        title: '',
-      }
-      await todoStore.addedFolder(workspaceId, body)
+  data() {
+    return {
+      folders: reactive([] as WorkfolderType[]),
     }
-
-    const handleUpdatedFolder = async (folderId: string, title: string) => {
-      await todoStore.updatedFolder(workspaceId, folderId, title)
-    }
-
-    const handleDeleteFolder = async (folderId: string) => {
-      await todoStore.deletedFolder(workspaceId, folderId)
-    }
-
-    const gridStyle = computed(() => ({
-      gridTemplateColumns: `repeat(${todoStore.folders.length + 1}, 280px)`,
-    }))
-
-    const fetchWorkBucket = async (bucketId: string) => {
+  },
+  methods: {
+    async fecthWorkfolders(bucketId: string) {
       try {
-        const data = await getWorkspaceBucket(workspaceId, bucketId)
+        const res = await getWorkspaceFoldersWithTodos(bucketId)
 
-        if (data?.success) {
-          bucketTitle.value = data?.data
-          console.log(data)
+        if (res?.success) {
+          const data = res?.data
+          // console.log(data)
+          this.folders = data
         }
       } catch (error) {
         console.log(error)
       }
-    }
-
-    watch(
-      bucketId,
-      async (newBucketId, oldBucketId) => {
-        if (newBucketId && newBucketId !== oldBucketId) {
-          await todoStore.fetchFoldersWithTodo(workspaceId, newBucketId as string)
-          await fetchWorkBucket(newBucketId as string)
+    },
+    async handleCreatedFolder() {
+      try {
+        const res = await createdWorkspaceFolder(
+          this.workspaceAccount as string,
+          this.bucketId as string,
+        )
+        if (res?.success) {
+          const data = res?.data
+          this.folders.push(data)
         }
-      },
-      { immediate: true },
-    )
-
-    onMounted(async () => {
-      const workbucketId = typeof bucketId.value === 'string' ? bucketId.value : ''
-      if (workbucketId) {
-        await todoStore.fetchFoldersWithTodo(workspaceId, workbucketId)
-        await fetchWorkBucket(workbucketId)
+      } catch (error) {
+        console.log(error)
       }
-    })
+    },
+    async handleUpdatedFolderTitle(folderId: string, folderTitle: string) {
+      try {
+        const res = await updatedWorkspaceFolderTitle(folderId, {
+          title: folderTitle,
+        })
 
-    return {
-      folders: todoStore.folders,
-      bucketTitle,
-      gridStyle,
-      handleAddedFolder,
-      handleUpdatedFolder,
-      handleDeleteFolder,
+        if (res?.success) {
+          const updated_folders = this.folders.map((folder) => {
+            return folder._id === folderId ? { ...folder, title: folderTitle } : folder
+          })
+          this.folders = updated_folders
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async handleDeletedFolder(folderId: string) {
+      try {
+        const res = await deleteWorkspaceFolder(folderId)
+        if (res?.success) {
+          const updated_folders = this.folders.filter((folder) => folder._id !== folderId)
+          this.folders = updated_folders
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+  },
+  mounted() {
+    if (this.bucketId) {
+      this.fecthWorkfolders(this.bucketId as string)
     }
+  },
+  computed: {
+    workspaceAccount() {
+      return this.$route.params.account
+    },
+    bucketId() {
+      return this.$route.params.bucketId
+    },
+    gridStyle() {
+      return {
+        gridTemplateColumns: `repeat(${this.folders.length + 1}, 280px)`,
+      }
+    },
   },
 }
 </script>
 
 <template>
-  <WorkspaceLayout mainTitle="代辦列表" :needLink="true" :pushTitle="bucketTitle.value">
-    <!-- <template #workspace>
+  <WorkspaceLayout mainTitle="代辦列表">
+    <template #workspace>
       <div class="w-full h-full overflow-x-auto scroll-horizonal">
         <div class="grid gap-4 h-full" :style="gridStyle">
-          <TodoGroup
+          <TodoFolder
             v-for="folder in folders"
+            :key="folder._id"
             :id="folder._id"
             :title="folder.title"
-            :todos="folder.todos"
-            :key="folder._id"
-            @update-folder="handleUpdatedFolder"
-            @delete-folder="handleDeleteFolder"
+            @updated-folder="handleUpdatedFolderTitle"
+            @deleted-folder="handleDeletedFolder"
           />
           <button
-            @click="handleAddedFolder"
-            class="px-4 h-10 w-full rounded-md border text-ocean-teal-60 border-ocean-teal-60 border-dashed flex justify-center items-center font-bold hover:border-ocean-teal hover:text-ocean-teal"
+            @click="handleCreatedFolder"
+            class="px-4 h-10 rounded-md border text-ocean-teal-60 border-ocean-teal-60 border-dashed flex justify-center items-center font-bold hover:border-ocean-teal hover:text-ocean-teal"
           >
             + 新增群組
           </button>
         </div>
       </div>
-    </template> -->
+    </template>
   </WorkspaceLayout>
 </template>
 

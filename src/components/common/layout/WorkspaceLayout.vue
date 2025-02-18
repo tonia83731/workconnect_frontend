@@ -68,13 +68,13 @@ export default {
     mainTitle: {
       type: String,
     },
-    needLink: {
-      type: Boolean,
-      default: false,
-    },
-    pushTitle: {
-      type: String,
-    },
+    // needLink: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // pushTitle: {
+    //   type: String,
+    // },
   },
   data() {
     return {
@@ -318,19 +318,17 @@ export default {
     class="w-[calc(100%-250px)] h-full max-h-screen overflow-y-auto overflow-x-hidden absolute top-0 left-[250px] bg-pale-aqua text-midnight-forest"
   >
     <div class="w-5/6 max-w-5xl mx-auto xl:w-full h-screen pt-12 pb-8 flex flex-col gap-8">
-      <div v-if="needLink" class="flex items-center gap-2">
+      <h1 class="font-bold text-xl h-7">{{ mainTitle }}</h1>
+      <!-- <div v-if="needLink" class="flex items-center gap-2">
         <RouterLink :to="`/workspace/${workspaceAccount}/todo`" class="font-bold text-xl h-7">{{
           mainTitle
         }}</RouterLink>
         <LeftArrowIcon class="w-6 h-6 rotate-180" />
         <h1 class="font-bold text-xl h-7">{{ pushTitle }}</h1>
-      </div>
-      <div v-else class="flex items-center gap-2">
+      </div> -->
+      <!-- <div class="flex items-center gap-2">
         <h1 class="font-bold text-xl h-7">{{ mainTitle }}</h1>
-        <!-- <RouterLink v-if="needLink" :to="pushLink">
-          <SettingsSolidIcon class="w-6 h-6" />
-        </RouterLink> -->
-      </div>
+      </div> -->
       <div class="h-[calc(100vh-3.75rem)]">
         <slot name="workspace"></slot>
       </div>

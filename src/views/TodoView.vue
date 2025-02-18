@@ -207,55 +207,6 @@ export default {
             </div>
           </div>
         </div>
-        <!-- 資料夾列表 -->
-        <!-- <div class="grid grid-cols-1 lg:grid-cols-2 gap-x-4 gap-y-8">
-          <div class="relative" v-for="bucket in buckets" :key="bucket._id">
-            <div
-              class="w-full p-4 flex flex-col gap-2 justify-between bg-gradient-to-r from-ocean-teal to-transparent text-midnight-forest"
-            >
-              <div class="flex flex-col gap-1">
-                <div @dblclick="enableEditing(bucket)">
-                  <div class="flex items-center gap-2" v-if="isEditing && bucketId === bucket._id">
-                    <PencilEditIcon class="w-5 h-5 text-soft-aqua" />
-                    <input
-                      type="text"
-                      v-model="bucketTitle"
-                      class="border-b border-soft-aqua py-1 bg-transparent text-soft-aqua font-bold"
-                      @blur="saveEditingTitle"
-                    />
-                  </div>
-                  <div class="flex items-center gap-2" title="雙點擊修改工作欄標題" v-else>
-                    <button>
-                      <PinIcon v-if="bucket.isPinned" class="w-4 h-4 text-white" />
-                      <PinOutlineIcon
-                        v-else
-                        class="w-4 h-4 text-white opacity-0 hover:opacity-100"
-                      />
-                    </button>
-                    <h5 class="font-bold text-white">{{ bucket.title }}</h5>
-                  </div>
-                </div>
-                <div class="flex flex-col justify-end text-xs text-midnight-forest pb-4">
-                  <div class="flex items-center justify-end gap-1">
-                    <FolderIcon class="w-4 h-4" />
-                    <p class="">{{ bucket.folderCount }}個資料夾</p>
-                  </div>
-                  <div class="text-end">最後更新時間: {{ formatDate(bucket.updatedAt) }}</div>
-                </div>
-              </div>
-              <button>
-                <TrashIcon class="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <RouterLink
-              class="absolute -bottom-2 -right-2 group hover:shadow-md flex items-center gap-0.5 bg-golder-amber text-midnight-forest font-medium px-4 py-2 w-fit rounded-tl-2xl rounded-br-2xl"
-              :to="`/workspace/${workspaceId}/todo/${bucket._id}`"
-            >
-              <p class="">前往TODO列表</p>
-              <ArrowLongRightIcon class="w-3 h-3 opacity-0 group-hover:opacity-100" />
-            </RouterLink>
-          </div>
-        </div> -->
       </div>
     </template>
   </WorkspaceLayout>
