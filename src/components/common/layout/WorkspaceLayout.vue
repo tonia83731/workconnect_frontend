@@ -20,6 +20,10 @@ import ArrowLongRightIcon from '@/components/icons/ArrowLongRightIcon.vue'
 import { getWorkspaceBuckets, updatedPinnedWorkspaceBucket } from '@/api/workbucket'
 import { useAuthStore } from '@/stores/auth'
 import { useBucketStore } from '@/stores/bucket'
+// import { watchEffect } from 'vue'
+// import { getUserProfile } from '@/api/user'
+import { toast } from 'vue3-toastify'
+import { checkedWorkspaceAuth } from '@/api/workspace'
 
 const authStore = useAuthStore()
 const bucketStore = useBucketStore()
@@ -68,10 +72,6 @@ export default {
       type: Boolean,
       default: false,
     },
-    // pushLink: {
-    //   type: String,
-    //   default: '#',
-    // },
     pushTitle: {
       type: String,
     },
@@ -88,6 +88,7 @@ export default {
         // todobuckets: [],
       },
       todoToggle: false,
+      // userId: authStore.userId,
     }
   },
   watch: {
@@ -99,6 +100,43 @@ export default {
     },
   },
   methods: {
+    async checkWorkspaceAuthentication(workspaceAccount: string) {
+      try {
+        const res = await checkedWorkspaceAuth(workspaceAccount)
+        if (res?.success) {
+          const data = res?.data
+          const { isMember, admin_status } = data
+          if (!isMember) {
+            authStore.workspaceLogout()
+            toast.error('工作區權限不足')
+            setTimeout(() => {
+              const url = `/dashboard/${this.userId}`
+              this.$router.push(url)
+            }, 2000)
+          } else {
+            authStore.updatedWorkspaceAuth({
+              isMember,
+              adminStatus: admin_status,
+            })
+          }
+        } else {
+          authStore.workspaceLogout()
+          toast.error('工作區權限不足')
+          setTimeout(() => {
+            const url = `/dashboard/${this.userId}`
+            this.$router.push(url)
+          }, 2000)
+        }
+      } catch (error) {
+        // console.log(error)
+        authStore.workspaceLogout()
+        toast.error(`工作區權限不足: ${error}`)
+        setTimeout(() => {
+          const url = `/dashboard/${this.userId}`
+          this.$router.push(url)
+        }, 2000)
+      }
+    },
     async fetchBuckets(workspaceAccount: string) {
       try {
         const res = await getWorkspaceBuckets(workspaceAccount)
@@ -152,17 +190,21 @@ export default {
         console.log(error)
       }
     },
-    handleSwitchWorkspace() {},
+    handleSwitchWorkspace() {
+      authStore.workspaceLogout()
+      this.$router.push(`/dashboard/${this.userId}`)
+    },
     handleLogout() {
       authStore.logout()
       this.$router.push({ name: 'login' })
     },
   },
   mounted() {
-    this.updateLinks()
     if (this.workspaceAccount) {
+      this.checkWorkspaceAuthentication(this.workspaceAccount as string)
       this.fetchBuckets(this.workspaceAccount as string)
     }
+    this.updateLinks()
   },
   computed: {
     workspaceAccount() {
@@ -173,6 +215,9 @@ export default {
     },
     todobuckets() {
       return bucketStore.pinnedBuckets || []
+    },
+    userId() {
+      return authStore.userId
     },
   },
 }

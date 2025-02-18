@@ -3,8 +3,15 @@
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
 import InvitedMembers from '@/components/member-page/InvitedMembers.vue'
 import CurrentMembers, { type MemberDataType } from '@/components/member-page/CurrentMembers.vue'
-import { addWorkspaceMembers, cancelledInvitations, getWorkspaceMembers } from '@/api/workspace'
+import {
+  addWorkspaceMembers,
+  cancelledInvitations,
+  getWorkspaceMembers,
+  removeWorkspaceAdmin,
+  removeWorkspaceMembers,
+} from '@/api/workspace'
 import { reactive } from 'vue'
+import { addWrokspaceAdmin } from '../api/workspace'
 
 export default {
   components: {
@@ -21,7 +28,7 @@ export default {
       inviteToggle: false,
       memberToggle: true,
       invites: reactive([] as string[]),
-      members: [] as MemberDataType[],
+      members: reactive([] as MemberDataType[]),
     }
   },
   methods: {
@@ -31,7 +38,6 @@ export default {
         if (res?.success) {
           const data = res?.data
           const { invites, members } = data
-          // console.log(invites, members)
           this.invites = invites
           this.members = members
         }
@@ -77,6 +83,51 @@ export default {
           if (index !== -1) {
             this.invites.splice(index, 1)
           }
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    handleUpdatedAdmin(memberId: string, isAdmin: boolean) {
+      if (!isAdmin) {
+        this.handleSetAdmin(memberId)
+      } else {
+        this.handleRemoveAdmin(memberId)
+      }
+    },
+    async handleSetAdmin(memberId: string) {
+      try {
+        const res = await addWrokspaceAdmin(this.workspaceAccount as string, memberId)
+        if (res?.success) {
+          const updated_members = this.members.map((member) => {
+            return member._id === memberId ? { ...member, isAdmin: true } : member
+          })
+          this.members = updated_members
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async handleRemoveAdmin(memberId: string) {
+      try {
+        const res = await removeWorkspaceAdmin(this.workspaceAccount as string, memberId)
+        if (res?.success) {
+          const updated_members = this.members.map((member) => {
+            return member._id === memberId ? { ...member, isAdmin: false } : member
+          })
+          this.members = updated_members
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    // test here
+    async handleDeleteMember(memberId: string) {
+      try {
+        const res = await removeWorkspaceMembers(this.workspaceAccount as string, memberId)
+        if (res?.success) {
+          const updated_members = this.members.filter((member) => member._id !== memberId)
+          this.members = updated_members
         }
       } catch (error) {
         console.log(error)
@@ -144,6 +195,8 @@ export default {
           :memberToggle="memberToggle"
           @member-toggle="handleToggle('member')"
           :members="members"
+          @updated-admin="handleUpdatedAdmin"
+          @delete-member="handleDeleteMember"
         />
         <!-- @updated-admin="handleUpdatedAdmin"
           @delete-member="handleDeleteMember" -->

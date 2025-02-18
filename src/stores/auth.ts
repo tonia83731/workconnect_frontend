@@ -1,5 +1,4 @@
 import { defineStore } from 'pinia'
-import { checkedAuthentication } from '@/api/auth'
 
 type UserProfileData = {
   id: string
@@ -14,6 +13,8 @@ type AuthStateProps = {
     name: string
     email: string
   } | null
+  isMember: boolean | null
+  adminStatus: boolean | null
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -22,7 +23,10 @@ export const useAuthStore = defineStore('auth', {
       isAuth: false,
       userId: null,
       user: null,
+      isMember: null,
+      adminStatus: null,
     }) as AuthStateProps,
+  persist: true,
   actions: {
     getUserData(userData: UserProfileData) {
       this.user = {
@@ -31,28 +35,38 @@ export const useAuthStore = defineStore('auth', {
       }
       this.userId = userData.id
     },
-    async checkedUserAuthentication() {
-      try {
-        const res = await checkedAuthentication()
-        if (res?.success) {
-          this.isAuth = res?.data.isAuth
-          this.userId = res?.data.userId
-          this.user = {
-            name: res?.data.user.name,
-            email: res?.data.user.email,
+    updatedUserAuth(userData: {
+      isAuth: boolean
+      userId: string | null
+      user: {
+        name: string
+        email: string
+      } | null
+    }) {
+      this.isAuth = userData.isAuth
+      this.userId = userData.userId
+      this.user = userData.user
+        ? {
+            name: userData.user?.name,
+            email: userData.user?.email,
           }
-        } else {
-          this.isAuth = false
-        }
-      } catch (error) {
-        console.log(error)
-      }
+        : null
+    },
+    updatedWorkspaceAuth(memberData: { isMember: boolean | null; adminStatus: boolean | null }) {
+      this.isMember = memberData.isMember
+      this.adminStatus = memberData.adminStatus
     },
     logout() {
       localStorage.removeItem('memberToken')
       this.user = null
       this.userId = null
       this.isAuth = false
+      this.isMember = null
+      this.adminStatus = null
+    },
+    workspaceLogout() {
+      this.isMember = null
+      this.adminStatus = null
     },
   },
 })

@@ -57,9 +57,9 @@ export const cancelledInvitations = async (
   }
 }
 
-export const removeWorkspaceMembers = async (workspaceId: string, userId: string) => {
+export const removeWorkspaceMembers = async (workspaceAccount: string, memberId: string) => {
   try {
-    const url = WORKSPACE_URL(workspaceId) + `/${userId}/remove-member`
+    const url = `/workspace/${workspaceAccount}//${memberId}/remove-member`
     const respnose = await axiosAuthFetch('DELETE', url)
     return respnose?.data
   } catch (error) {
@@ -77,20 +77,30 @@ export const updatedWorkspace = async (workspaceId: string, payload: { title: st
   }
 }
 
-export const addWrokspaceAdmin = async (workspaceId: string, memberId: string) => {
+export const addWrokspaceAdmin = async (workspaceAccount: string, memberId: string) => {
   try {
-    const url = WORKSPACE_URL(workspaceId) + `/${memberId}/admin/add-admin`
+    const url = `/workspace/${workspaceAccount}/${memberId}/admin/add-admin`
     const respnose = await axiosAuthFetch('POST', url)
     return respnose?.data
   } catch (error) {
     console.log(error)
   }
 }
-export const removeWrokspaceAdmin = async (workspaceId: string, memberId: string) => {
+export const removeWorkspaceAdmin = async (workspaceAccount: string, memberId: string) => {
   try {
-    const url = WORKSPACE_URL(workspaceId) + `/${memberId}/admin/remove-admin`
+    const url = `/workspace/${workspaceAccount}/${memberId}/admin/remove-admin`
     const respnose = await axiosAuthFetch('DELETE', url)
     return respnose?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const checkedWorkspaceAuth = async (workspaceAccount: string) => {
+  try {
+    const url = `/workspace/${workspaceAccount}/checked-worksapce-auth`
+    const response = await axiosAuthFetch('GET', url)
+    return response?.data
   } catch (error) {
     console.log(error)
   }

@@ -1,10 +1,10 @@
 <script lang="ts">
-import { onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { updatedUserProfile } from '@/api/user'
 import DefaultLayout from '@/components/common/layout/DefaultLayout.vue'
 import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
 import { useAuthStore } from '@/stores/auth'
-import { input_class } from '@/styles/input-style'
+import { inputClass } from '@/styles/input-style'
+import { toast } from 'vue3-toastify'
 
 export type RegisterInput = {
   name: string
@@ -12,45 +12,74 @@ export type RegisterInput = {
   password?: string
 }
 
+const authStore = useAuthStore()
+
 export default {
   components: {
     LeftArrowIcon,
     DefaultLayout,
   },
-  setup() {
-    const authStore = useAuthStore()
-    const { params } = useRoute()
-    const name = ref<string>('')
-    const email = ref<string>('')
-
-    const handleFormSubmit = async (value: { name: string; email: string }) => {
-      if (authStore.user?.name === value.name && authStore.user?.email === value.email) return
-      await authStore.handleUpdatedProfile(params?.userId as string, value)
-    }
-
-    onMounted(() => {
-      if (authStore.isAuth && authStore.user) {
-        name.value = authStore.user.name
-        email.value = authStore.user.email
-      }
-    })
-
-    watch(
-      () => authStore.user,
-      (newUser) => {
-        if (!newUser) return
-        name.value = newUser?.name
-        email.value = newUser?.email
-      },
-    )
-
+  data() {
     return {
-      input_class: input_class(),
-      name,
-      email,
-      handleFormSubmit,
-      userId: params?.userId,
+      input_class: inputClass(),
+      // name: '',
+      // email: '',
     }
+  },
+  methods: {
+    async handleProfileUpdated() {
+      try {
+        const res = await updatedUserProfile(this.userId as string, {
+          name: this.name,
+          email: this.email,
+        })
+
+        if (res?.success) {
+          toast.success('使用者資料更新成功')
+          const data = res?.data
+          const user = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+          }
+
+          authStore.getUserData(user)
+          this.name = data.name
+          this.email = data.email
+        } else {
+          toast.error('使用者資料更新失敗')
+        }
+      } catch (error) {
+        console.log(error)
+        toast.error('使用者資料更新失敗')
+      }
+    },
+  },
+  mounted() {
+    // if (this.userId) {
+    //   this.fetchUserData(this.userId as string)
+    // }
+  },
+  computed: {
+    userId() {
+      return authStore.userId
+    },
+    name: {
+      get() {
+        return authStore.user?.name || ''
+      },
+      set(value: string) {
+        authStore.user!.name = value
+      },
+    },
+    email: {
+      get() {
+        return authStore.user?.email || ''
+      },
+      set(value: string) {
+        authStore.user!.email = value
+      },
+    },
   },
 }
 </script>
@@ -62,9 +91,9 @@ export default {
       <p>回到工作區選單</p>
     </RouterLink>
     <h1 class="font-bold text-xl">使用者資料</h1>
-    <VForm class="flex flex-col gap-8 w-full" v-slot="{ errors }" @submit="handleFormSubmit">
+    <VForm class="flex flex-col gap-8 w-full" v-slot="{ errors }" @submit="handleProfileUpdated">
       <div class="flex flex-col gap-4">
-        <div class="flex flex-col gap-4 md:grid md:grid-cols-2">
+        <div class="flex flex-col gap-4">
           <div class="flex flex-col gap-0.5">
             <VField
               name="name"
@@ -88,16 +117,6 @@ export default {
             /><ErrorMessage name="email" class="text-error text-sm" />
           </div>
         </div>
-        <!-- <div class="flex flex-col gap-0.5">
-          <VField
-            name="password"
-            type="password"
-            rules="strongPassword"
-            placeholder="PASSWORD"
-            v-model="password"
-            :class="[input_class, { 'border border-error': errors.password }]"
-          /><ErrorMessage name="password" class="text-error text-sm" />
-        </div> -->
       </div>
       <div class="flex justify-end">
         <button

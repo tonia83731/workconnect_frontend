@@ -24,7 +24,8 @@ export default {
   },
   data() {
     return {
-      userId: authStore.userId,
+      // userId: authStore.userId,
+      // userAdmin: authStore.isAdmin,
     }
   },
   methods: {
@@ -36,6 +37,15 @@ export default {
     },
     handleDeleteMember(memberId: string) {
       this.$emit('delete-member', memberId)
+    },
+  },
+  mounted() {},
+  computed: {
+    userId() {
+      return authStore.userId
+    },
+    userAdmin() {
+      return authStore.adminStatus
     },
   },
 }
@@ -70,7 +80,7 @@ export default {
         <div class="text-white flex items-center gap-2">
           <button
             @click="handleUpdatedAdmin(member._id, member.isAdmin)"
-            :disabled="member._id === userId"
+            :disabled="member._id === userId || !userAdmin"
             class="px-2 h-6 leading-6 rounded-sm disabled:bg-muted-gray"
             :class="member.isAdmin ? 'bg-golder-amber' : 'bg-peach'"
           >
@@ -78,7 +88,7 @@ export default {
           </button>
           <button
             @click="handleDeleteMember(member._id)"
-            :disabled="member._id === userId"
+            :disabled="member._id === userId || !userAdmin"
             class="px-2 h-6 leading-6 bg-ocean-teal disabled:bg-muted-gray"
           >
             刪除成員
