@@ -1,8 +1,6 @@
 <script lang="ts">
-import { reactive, ref, watch, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useWorkspaceStore } from '@/stores/workspace.ts'
 import ModalLayout from './ModalLayout.vue'
+import LeftArrowIcon from '@/components/icons/LeftArrowIcon.vue'
 import ClipBoardIcon from '@/components/icons/ClipBoardIcon.vue'
 import ClipBoardSolidIcon from '@/components/icons/ClipBoardSolidIcon.vue'
 import UserGroupIcon from '@/components/icons/UserGroupIcon.vue'
@@ -18,13 +16,33 @@ import TrashIcon from '@/components/icons/TrashIcon.vue'
 import PinIcon from '@/components/icons/PinnedIcon.vue'
 import PinOutlineIcon from '@/components/icons/PinnedOutlineIcon.vue'
 import DotsIcon from '@/components/icons/EllipsisVerticalIcon.vue'
+import ArrowLongRightIcon from '@/components/icons/ArrowLongRightIcon.vue'
+import { getWorkspaceBuckets, updatedPinnedWorkspaceBucket } from '@/api/workbucket'
 import { useAuthStore } from '@/stores/auth'
-// import { toast } from 'vue3-toastify'
-import { useChatStore } from '../../../stores/chat'
+import { useBucketStore } from '@/stores/bucket'
+
+const authStore = useAuthStore()
+const bucketStore = useBucketStore()
+
+type NavlinkType = {
+  name: string
+  href: string
+  title: string
+  icon: string
+  icon_active: string
+}
+
+// interface WorkspaceLayoutType {
+//   navlinks: NavlinkType[]
+//   todolink: NavlinkType & {
+//     todoBuckets: string[]
+//   }
+// }
 
 export default {
   components: {
     ModalLayout,
+    LeftArrowIcon,
     ClipBoardIcon,
     ClipBoardSolidIcon,
     UserGroupIcon,
@@ -40,6 +58,7 @@ export default {
     PinIcon,
     PinOutlineIcon,
     DotsIcon,
+    ArrowLongRightIcon,
   },
   props: {
     mainTitle: {
@@ -49,116 +68,112 @@ export default {
       type: Boolean,
       default: false,
     },
-    pushLink: {
+    // pushLink: {
+    //   type: String,
+    //   default: '#',
+    // },
+    pushTitle: {
       type: String,
-      default: '#',
     },
   },
-  setup(props) {
-    const { params, path } = useRoute()
-    const router = useRouter()
-    const workspaceId = params.workspaceId
-    const authStore = useAuthStore()
-    const workspaceStore = useWorkspaceStore()
-    const chatStore = useChatStore()
-
-    const navToggle = ref(false)
-    const todoBtn = {
-      name: 'todo',
-      href: `/workspace/${workspaceId}/todo`,
-      title: '代辦列表',
-      icon: 'ClipBoardIcon',
-      icon_active: 'ClipBoardSolidIcon',
-      todobuckets: workspaceStore.buckets,
-    }
-
-    const navlinks = [
-      {
-        name: 'member',
-        href: `/workspace/${workspaceId}/member`,
-        title: '成員列表',
-        icon: 'UserGroupIcon',
-        icon_active: 'UserGroupSolidIcon',
-      },
-      {
-        name: 'chat',
-        href: `/workspace/${workspaceId}/chat`,
-        title: '討論室',
-        icon: 'ChatIcon',
-        icon_active: 'ChatSolidIcon',
-      },
-    ]
-
-    const activeLink = reactive({
-      currentPath: path,
-    })
-
-    const handleTodoListToggle = () => {
-      navToggle.value = !navToggle.value
-    }
-
-    // const initializedBucketData = () => {
-    //   bucketTitle.value = ''
-    //   bucketToggle.value = false
-    // }
-    // const handleBucketToggle = () => {
-    //   if (bucketToggle.value) {
-    //     initializedBucketData()
-    //   } else {
-    //     bucketToggle.value = true
-    //   }
-    // }
-    // const handlCreatedBucket = async () => {
-    //   const body = {
-    //     title: bucketTitle.value,
-    //   }
-
-    //   const res = await workspaceStore.handleCreateBuckets(workspaceId as string, body)
-
-    //   if (res.success) {
-    //     toast.success(res.message)
-    //   } else {
-    //     toast.error(res.message)
-    //   }
-    // }
-
-    watch(
-      () => path,
-      (newPath) => {
-        activeLink.currentPath = newPath
-      },
-    )
-
-    const handleSwitchWorkspace = () => {
-      workspaceStore.clearWorkspaceData()
-      chatStore.clearChatData()
-      router.push(`/dashboard/${authStore.userId}`)
-    }
-    const handleLogout = () => {
-      workspaceStore.clearWorkspaceData()
-      chatStore.clearChatData()
-      authStore.handleLogout()
-    }
-
-    // ----------------- FETCTH WORKSPACEDATA -----------------
-    onMounted(async () => {
-      await workspaceStore.fetchWorkspaceBuckets(workspaceId as string)
-      await workspaceStore.fetchWorkspaceMembers(workspaceId as string)
-    })
-
+  data() {
     return {
-      workspaceId,
-      todoBtn,
-      navToggle,
-      handleTodoListToggle,
-      // handleBucketToggle,
-      // handlCreatedBucket,
-      navlinks,
-      activeLink,
-      handleSwitchWorkspace,
-      handleLogout,
-      ...props,
+      navlinks: [] as NavlinkType[],
+      todolink: {
+        name: 'todo',
+        href: '',
+        title: '代辦列表',
+        icon: 'ClipBoardIcon',
+        icon_active: 'ClipBoardSolidIcon',
+        // todobuckets: [],
+      },
+      todoToggle: false,
     }
+  },
+  watch: {
+    workspaceAccount: {
+      immediate: true,
+      handler() {
+        this.updateLinks()
+      },
+    },
+  },
+  methods: {
+    async fetchBuckets(workspaceAccount: string) {
+      try {
+        const res = await getWorkspaceBuckets(workspaceAccount)
+        if (res?.success) {
+          const data = res?.data
+          const pinned_data = data.filter((data: any) => data.isPinned)
+          bucketStore.updatedBuckets(data)
+          bucketStore.updatedPinnedBuckets(pinned_data)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    updateLinks() {
+      this.navlinks = [
+        {
+          name: 'member',
+          href: `/workspace/${this.workspaceAccount}/member`,
+          title: '成員列表',
+          icon: 'UserGroupIcon',
+          icon_active: 'UserGroupSolidIcon',
+        },
+        {
+          name: 'chat',
+          href: `/workspace/${this.workspaceAccount}/chat`,
+          title: '討論室',
+          icon: 'ChatIcon',
+          icon_active: 'ChatSolidIcon',
+        },
+      ]
+      this.todolink.href = `/workspace/${this.workspaceAccount}/todo`
+    },
+    handleTodoToggle() {
+      this.todoToggle = !this.todoToggle
+    },
+    async handleUnpinned(bucketId: string) {
+      try {
+        const res = await updatedPinnedWorkspaceBucket(bucketId)
+        if (res?.success) {
+          const data = res?.data
+          const buckets = bucketStore.buckets
+          const updated_buckets = buckets.map((bucket) => {
+            return bucket._id === bucketId ? data : bucket
+          })
+          bucketStore.updatedBuckets(updated_buckets)
+
+          const pinned_buckets = updated_buckets.filter((bucket) => bucket.isPinned)
+          bucketStore.updatedPinnedBuckets(pinned_buckets)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    handleSwitchWorkspace() {},
+    handleLogout() {
+      authStore.logout()
+      this.$router.push({ name: 'login' })
+    },
+  },
+  mounted() {
+    this.updateLinks()
+    if (this.workspaceAccount) {
+      this.fetchBuckets(this.workspaceAccount as string)
+    }
+  },
+  computed: {
+    workspaceAccount() {
+      return this.$route.params.account
+    },
+    activeLink() {
+      return this.$route.path
+    },
+    todobuckets() {
+      return bucketStore.pinnedBuckets || []
+    },
   },
 }
 </script>
@@ -169,45 +184,61 @@ export default {
   >
     <div class="flex flex-col gap-8">
       <RouterLink
-        :to="`/workspace/${workspaceId}/todo`"
+        :to="`/workspace/${workspaceAccount}/todo`"
         class="font-bold text-xl text-midnight-forest pl-4"
         >WORKCONNECT</RouterLink
       >
       <nav class="flex flex-col">
         <div class="w-full">
           <button
-            @click="handleTodoListToggle"
+            @click="handleTodoToggle"
+            :disabled="todobuckets.length === 0"
             class="w-full px-4 py-2 flex justify-between items-center"
             :class="{
-              'bg-midnight-forest text-white': activeLink.currentPath.includes(todoBtn.href),
-              'bg-white text-midnight-forest': !activeLink.currentPath.includes(todoBtn.href),
+              'bg-midnight-forest text-white': activeLink.includes(todolink.href),
+              'bg-white text-midnight-forest': !activeLink.includes(todolink.href),
             }"
           >
             <div class="flex gap-2 items-center">
               <component
-                :is="activeLink.currentPath === todoBtn.href ? todoBtn.icon_active : todoBtn.icon"
+                :is="activeLink === todolink.href ? todolink.icon_active : todolink.icon"
                 class="w-6 h-6"
               />
-              <p class="font-medium text-lg">{{ todoBtn.title }}</p>
+              <p class="font-medium text-lg">{{ todolink.title }}</p>
             </div>
-            <ChevronDownIcon class="w-4 h-4 transition" :class="navToggle && 'rotate-180'" />
+            <ChevronDownIcon
+              v-if="todobuckets.length > 0"
+              class="w-4 h-4 transition"
+              :class="todoToggle && 'rotate-180'"
+            />
           </button>
-          <ul v-if="navToggle">
+          <ul v-if="todoToggle">
             <li
-              class="pl-12 pr-4 py-1 flex items-center gap-1.5 hover:bg-midnight-forest-40"
-              v-for="bucket in todoBtn.todobuckets"
+              class="pl-12 pr-4 py-2 flex items-center gap-1.5 hover:bg-midnight-forest-40"
+              v-for="bucket in todobuckets"
               :key="bucket._id"
             >
-              <RouterLink :to="`${todoBtn.href}/${bucket._id}`" class="truncate">{{
-                bucket.title
-              }}</RouterLink>
-              <button>
+              <button @click="handleUnpinned(bucket._id)">
                 <PinIcon v-if="bucket.isPinned" class="w-4 h-4 text-midnight-forest" />
                 <PinOutlineIcon
                   v-else
                   class="w-4 h-4 text-midnight-forest opacity-0 hover:opacity-100"
                 />
               </button>
+              <RouterLink :to="`${todolink.href}/${bucket._id}`" class="truncate">{{
+                bucket.title
+              }}</RouterLink>
+            </li>
+            <li
+              class="pl-12 pr-4 py-2 flex items-center gap-1.5 text-ocean-teal hover:bg-midnight-forest-40"
+            >
+              <RouterLink
+                class="flex items-center gap-1 font-medium"
+                :to="`/workspace/${workspaceAccount}/todo`"
+              >
+                <div>前往Bucket列表</div>
+                <div><ArrowLongRightIcon /></div>
+              </RouterLink>
             </li>
           </ul>
         </div>
@@ -216,12 +247,10 @@ export default {
           :key="name"
           :to="href"
           class="flex gap-2 items-center px-4 py-2"
-          :class="{
-            'bg-midnight-forest text-white': activeLink.currentPath === href,
-            'bg-white text-midnight-forest': activeLink.currentPath !== href,
-          }"
         >
-          <component :is="activeLink.currentPath === href ? icon_active : icon" class="w-6 h-6" />
+          <!-- :class="{ 'bg-midnight-forest text-white': activeLink === href, 'bg-white
+          text-midnight-forest': activeLink !== href, }" -->
+          <component :is="activeLink === href ? icon_active : icon" class="w-6 h-6" />
           <p class="font-medium text-lg">{{ title }}</p>
         </RouterLink>
       </nav>
@@ -244,11 +273,18 @@ export default {
     class="w-[calc(100%-250px)] h-full max-h-screen overflow-y-auto overflow-x-hidden absolute top-0 left-[250px] bg-pale-aqua text-midnight-forest"
   >
     <div class="w-5/6 max-w-5xl mx-auto xl:w-full h-screen pt-12 pb-8 flex flex-col gap-8">
-      <div class="flex items-center gap-2">
+      <div v-if="needLink" class="flex items-center gap-2">
+        <RouterLink :to="`/workspace/${workspaceAccount}/todo`" class="font-bold text-xl h-7">{{
+          mainTitle
+        }}</RouterLink>
+        <LeftArrowIcon class="w-6 h-6 rotate-180" />
+        <h1 class="font-bold text-xl h-7">{{ pushTitle }}</h1>
+      </div>
+      <div v-else class="flex items-center gap-2">
         <h1 class="font-bold text-xl h-7">{{ mainTitle }}</h1>
-        <RouterLink v-if="needLink" :to="pushLink">
+        <!-- <RouterLink v-if="needLink" :to="pushLink">
           <SettingsSolidIcon class="w-6 h-6" />
-        </RouterLink>
+        </RouterLink> -->
       </div>
       <div class="h-[calc(100vh-3.75rem)]">
         <slot name="workspace"></slot>

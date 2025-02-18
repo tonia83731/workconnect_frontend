@@ -1,36 +1,42 @@
 <script lang="ts">
-import { useAuthStore } from '@/stores/auth'
-import { useWorkspaceStore } from '@/stores/workspace'
 import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
+
+export type MemberDataType = {
+  _id: string
+  name: string
+  email: string
+  isAdmin: boolean
+}
+
 export default {
   components: { ChevronDownIcon },
   props: {
-    currentToggle: {
+    memberToggle: {
       type: Boolean,
       default: true,
     },
+    members: {
+      type: Array as () => MemberDataType[],
+    },
   },
-  setup(props, { emit }) {
-    const authStore = useAuthStore()
-    const workspaceStore = useWorkspaceStore()
-    const handleToggle = (type: 'add-member' | 'invited' | 'current') => {
-      emit('current-toggle', type)
-    }
-    const handleDeleteMember = (memberId: string) => {
-      emit('delete-member', memberId)
-    }
-    const handleUpdatedAdmin = (memberId: string, isAdmin: boolean) => {
-      emit('updated-admin', memberId, isAdmin)
-    }
-
+  data() {
     return {
       userId: authStore.userId,
-      members: workspaceStore.membersList,
-      handleToggle,
-      handleDeleteMember,
-      handleUpdatedAdmin,
-      ...props,
     }
+  },
+  methods: {
+    handleToggle(type: 'add-member' | 'invited' | 'member') {
+      this.$emit('member-toggle', type)
+    },
+    handleUpdatedAdmin(memberId: string, isAdmin: boolean) {
+      this.$emit('updated-admin', memberId, isAdmin)
+    },
+    handleDeleteMember(memberId: string) {
+      this.$emit('delete-member', memberId)
+    },
   },
 }
 </script>
@@ -38,14 +44,14 @@ export default {
 <template>
   <div class="flex flex-col gap-4">
     <button
-      @click="handleToggle('current')"
+      @click="handleToggle('member')"
       class="w-full text-white h-12 leading-12 px-4 font-bold flex justify-between items-center"
-      :class="currentToggle ? 'bg-ocean-teal' : 'bg-ocean-teal-60'"
+      :class="memberToggle ? 'bg-ocean-teal' : 'bg-ocean-teal-60'"
     >
       <div class="">現有成員</div>
-      <ChevronDownIcon class="w-4 h-4 transition" :class="currentToggle && 'rotate-180'" />
+      <ChevronDownIcon class="w-4 h-4 transition" :class="memberToggle && 'rotate-180'" />
     </button>
-    <div class="bg-white text-midnight-forest shadow-md" v-if="currentToggle">
+    <div class="bg-white text-midnight-forest shadow-md" v-if="memberToggle">
       <div
         class="w-full h-12 px-4 text-sm flex justify-between items-center"
         :class="index !== 0 && 'border-t border-muted-gray'"

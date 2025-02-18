@@ -1,19 +1,25 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from './stores/auth'
 import { onMounted } from 'vue'
-import Cookies from 'js-cookie'
+import { toast } from 'vue3-toastify'
 
-const token = Cookies.get('memberToken')
+const router = useRouter()
+const token = localStorage.getItem('memberToken')
 const authStore = useAuthStore()
 
 onMounted(() => {
-  if (token && !authStore.isAuth) {
-    authStore.fetchCheckedAuthentication()
+  if (!token) {
+    authStore.logout()
+    toast.error('權限不足，請重新登入')
+
+    setTimeout(() => {
+      router.push({ name: 'login' })
+    }, 2000)
+  } else if (!authStore.isAuth) {
+    authStore.checkedUserAuthentication()
   }
 })
-
-// console.log(authStore.isAuth)
 </script>
 
 <template>

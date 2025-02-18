@@ -2,29 +2,47 @@
 import { useAuthStore } from '@/stores/auth'
 import UserIcon from '@/components/icons/UserIcon.vue'
 import LogoutIcon from '@/components/icons/LogoutIcon.vue'
-import { useRoute } from 'vue-router'
-import { onMounted } from 'vue'
+import { getUserProfile } from '@/api/user'
+
+const authStore = useAuthStore()
 
 export default {
   components: {
     UserIcon,
     LogoutIcon,
   },
-  setup() {
-    const authStore = useAuthStore()
-    const { params } = useRoute()
-
-    const handleLogout = () => {
-      authStore.handleLogout()
+  data() {
+    return {
+      // params: this.$route.params,
     }
-
-    onMounted(() => {
-      if (params?.userId) {
-        authStore.fetchUserProfile(params.userId as string)
+  },
+  computed: {
+    user() {
+      return { info: authStore.user, userId: authStore.userId }
+    },
+  },
+  methods: {
+    // ...mapActions('auth', ['logout', 'getUserData']),
+    async fetchUserProfile(userId: string) {
+      try {
+        const res = await getUserProfile(userId)
+        if (res?.success) {
+          authStore.getUserData(res?.data)
+        }
+      } catch (error) {
+        console.log(error)
       }
-    })
-
-    return { user: authStore.user, userId: params.userId, handleLogout }
+    },
+    handleLogout() {
+      authStore.logout()
+      this.$router.push({ name: 'login' })
+    },
+  },
+  mounted() {
+    const userId = this.$route.params.userId as string
+    if (userId) {
+      this.fetchUserProfile(userId)
+    }
   },
 }
 </script>
@@ -35,13 +53,16 @@ export default {
     <div class="w-11/12 mx-auto h-[60px] leading-[60px] flex justify-between items-center">
       <h5 class="font-bold text-xl">WORKCONNECT</h5>
       <div class="flex items-center gap-2">
-        <RouterLink :to="`/profile/${userId}`" class="flex flex-col items-center gap-0.5 group">
+        <RouterLink
+          :to="`/profile/${user.userId}`"
+          class="flex flex-col items-center gap-0.5 group"
+        >
           <div
             class="w-8 h-8 rounded-full bg-soft-aqua flex justify-center items-center group-hover:border group-hover:border-ocean-teal"
           >
             <UserIcon class="text-ocean-teal" />
           </div>
-          <p class="text-xs text-ocean-teal hidden group-hover:block">{{ user?.name }}</p>
+          <p class="text-xs text-ocean-teal hidden group-hover:block">{{ user.info?.name }}</p>
         </RouterLink>
         <button @click="handleLogout" class="flex flex-col items-center gap-0.5 group">
           <div

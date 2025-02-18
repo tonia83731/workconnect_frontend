@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import axios, { type AxiosResponse } from 'axios'
-import Cookies from 'js-cookie'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import { useAuthStore } from '@/stores/auth'
@@ -46,13 +45,13 @@ export const axiosAuthFetch = async (
   url: string,
   payload?: any,
 ): Promise<AxiosResponse<ResponseData> | null> => {
-  const token = Cookies.get('memberToken')
+  const token = localStorage.getItem('memberToken')
   const authStore = useAuthStore()
   const router = useRouter()
 
   if (!token) {
     toast.error('權限不足: 請先登入!')
-    router.push({ name: 'login ' })
+    router.push({ name: 'login' })
     return null
   }
 

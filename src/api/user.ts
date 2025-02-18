@@ -1,5 +1,5 @@
 import { axiosAuthFetch } from './index'
-import { type UserProfileType } from './auth'
+
 const USER_URL = '/user'
 
 export const getUserProfile = async (userId: string) => {
@@ -10,7 +10,10 @@ export const getUserProfile = async (userId: string) => {
     console.log(error)
   }
 }
-export const updatedUserProfile = async (userId: string, payload: UserProfileType) => {
+export const updatedUserProfile = async (
+  userId: string,
+  payload: { name: string; email: string },
+) => {
   try {
     const response = await axiosAuthFetch('PUT', `${USER_URL}/${userId}/updated-profile`, payload)
     return response?.data

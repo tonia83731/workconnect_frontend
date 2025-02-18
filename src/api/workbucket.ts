@@ -1,11 +1,11 @@
 import { axiosAuthFetch } from './index'
 import { defaultURL } from './workspace'
 
-const WORKBUCKET_URL = (workspaceId: string) => defaultURL('workbucket', workspaceId)
+const WORKBUCKET_URL = (workspaceAccount: string) => defaultURL('workbucket', workspaceAccount)
 
-export const getWorkspaceBuckets = async (workspaceId: string) => {
+export const getWorkspaceBuckets = async (workspaceAccount: string) => {
   try {
-    const url = WORKBUCKET_URL(workspaceId) + '/buckets'
+    const url = WORKBUCKET_URL(workspaceAccount) + '/buckets'
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
@@ -13,9 +13,22 @@ export const getWorkspaceBuckets = async (workspaceId: string) => {
   }
 }
 
-export const createdWorkspaceBucket = async (workspaceId: string, payload: { title: string }) => {
+export const getWorkspaceBucket = async (workspaceId: string, bucketId: string) => {
   try {
-    const url = WORKBUCKET_URL(workspaceId) + '/create-bucket'
+    const url = WORKBUCKET_URL(workspaceId) + `/${bucketId}/bucket-title`
+    const response = await axiosAuthFetch('GET', url)
+    return response?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const createdWorkspaceBucket = async (
+  workspaceAccount: string,
+  payload: { title: string },
+) => {
+  try {
+    const url = WORKBUCKET_URL(workspaceAccount) + '/create-bucket'
     const response = await axiosAuthFetch('POST', url, payload)
     return response?.data
   } catch (error) {
@@ -24,15 +37,15 @@ export const createdWorkspaceBucket = async (workspaceId: string, payload: { tit
 }
 
 export const updatedWorkspaceBucket = async (
-  workspaceId: string,
+  // workspaceId: string,
   bucketId: string,
   payload: {
     title: string
-    isPinned: boolean
+    // isPinned: boolean
   },
 ) => {
   try {
-    const url = WORKBUCKET_URL(workspaceId) + `/${bucketId}/update-bucket`
+    const url = `/workbucket/${bucketId}/update-bucket`
     const response = await axiosAuthFetch('PUT', url, payload)
     return response?.data
   } catch (error) {
@@ -40,9 +53,19 @@ export const updatedWorkspaceBucket = async (
   }
 }
 
-export const deleteWorkspaceBucket = async (workspaceId: string, bucketId: string) => {
+export const updatedPinnedWorkspaceBucket = async (bucketId: string) => {
   try {
-    const url = WORKBUCKET_URL(workspaceId) + `/${bucketId}/delete-bucket`
+    const url = `/workbucket/${bucketId}/update-bucket-pinned`
+    const response = await axiosAuthFetch('PUT', url)
+    return response?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const deleteWorkspaceBucket = async (bucketId: string) => {
+  try {
+    const url = `/workbucket/${bucketId}/delete-bucket`
     const response = await axiosAuthFetch('DELETE', url)
     return response?.data
   } catch (error) {

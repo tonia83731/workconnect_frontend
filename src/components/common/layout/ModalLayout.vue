@@ -48,12 +48,11 @@ export default {
         ref="modalRef"
         class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md w-1/2 max-h-[400px]"
       >
-        <div class="flex justify-between items-center py-1 px-4">
-          <h5 class="text-lg font-bold text-midnight-forest">{{ title }}</h5>
-          <button
-            @click="$emit('update:toggle', false)"
-            class="text-muted-gray-60 hover:text-muted-gray"
-          >
+        <div
+          class="h-10 flex justify-between items-center py-1 px-4 rounded-t-md bg-midnight-forest text-white"
+        >
+          <h5 class="text-lg font-bold">{{ title }}</h5>
+          <button @click="$emit('update:toggle', false)" class="opacity-50 hover:opacity-100">
             <CrossIcon class="w-5 h-5" />
           </button>
         </div>

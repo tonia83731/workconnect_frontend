@@ -1,13 +1,10 @@
 <!-- eslint-disable @typescript-eslint/no-explicit-any -->
 <script lang="ts">
-import { ref } from 'vue'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
-import { useWorkspaceStore } from '@/stores/workspace'
 import InvitedMembers from '@/components/member-page/InvitedMembers.vue'
-import CurrentMembers from '@/components/member-page/CurrentMembers.vue'
-import { toast } from 'vue3-toastify'
-import { useRoute } from 'vue-router'
-import { input_class } from '@/data/input-style'
+import CurrentMembers, { type MemberDataType } from '@/components/member-page/CurrentMembers.vue'
+import { addWorkspaceMembers, cancelledInvitations, getWorkspaceMembers } from '@/api/workspace'
+import { reactive } from 'vue'
 
 export default {
   components: {
@@ -15,99 +12,86 @@ export default {
     InvitedMembers,
     CurrentMembers,
   },
-  setup() {
-    const workspaceStore = useWorkspaceStore()
-    const { params } = useRoute()
-    const { workspaceId } = params
-    // const input_class =
-    //   'w-full h-9 px-4 py-1.5 rounded-sm bg-gypsum text-gray placeholder:text-gray-50'
-    const email = ref('')
-    const addToggle = ref(false)
-    const invitedToggle = ref(false)
-    const currentToggle = ref(true)
-
-    const handleToggle = (type: 'add-member' | 'invited' | 'current') => {
-      switch (true) {
-        case type === 'add-member':
-          if (addToggle.value) email.value = ''
-          addToggle.value = !addToggle.value
-          break
-        case type === 'invited':
-          invitedToggle.value = !invitedToggle.value
-          break
-        case type === 'current':
-          currentToggle.value = !currentToggle.value
-          break
-        default:
-          return null
-      }
+  data() {
+    return {
+      input_class:
+        'w-full h-9 px-4 py-1.5 rounded-sm bg-gypsum text-ocean-teal placeholder:text-ocean-teal-60',
+      addToggle: false,
+      addEmail: '' as string,
+      inviteToggle: false,
+      memberToggle: true,
+      invites: reactive([] as string[]),
+      members: [] as MemberDataType[],
     }
-
-    const handleAddMember = async () => {
-      const isExisted =
-        workspaceStore.membersList.some((member) => member.email === email.value) ||
-        workspaceStore.invitesList.some((member) => member === email.value)
-      if (isExisted) {
-        toast.error(`${email.value} 已存在，請確認成員列表`)
+  },
+  methods: {
+    async fetchMemberlists(workspaceAccount: string) {
+      try {
+        const res = await getWorkspaceMembers(workspaceAccount)
+        if (res?.success) {
+          const data = res?.data
+          const { invites, members } = data
+          // console.log(invites, members)
+          this.invites = invites
+          this.members = members
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    handleToggle(type: 'add-member' | 'invited' | 'member') {
+      if (type === 'add-member') {
+        this.addToggle = !this.addToggle
         return
       }
-
-      const body = {
-        email: email.value,
+      if (type === 'invited') {
+        this.inviteToggle = !this.inviteToggle
+        return
       }
-
-      const res = await workspaceStore.handleAddMember(workspaceId as string, body)
-
-      if (res.success) {
-        toast.success(res.message)
-        addToggle.value = false
-        invitedToggle.value = true
-        email.value = ''
-      } else {
-        toast.error(res.message)
+      if (type === 'member') {
+        this.memberToggle = !this.memberToggle
+        return
       }
+    },
+    async handleAddMember() {
+      try {
+        const res = await addWorkspaceMembers(this.workspaceAccount as string, {
+          email: this.addEmail,
+        })
+        if (res?.success) {
+          this.invites.push(this.addEmail)
+          this.addEmail = ''
+          this.addToggle = false
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async handleCancelledInvite(email: string) {
+      try {
+        const res = await cancelledInvitations(this.workspaceAccount as string, { email })
+
+        if (res?.success) {
+          this.inviteToggle = true
+          const index = this.invites.indexOf(email)
+          if (index !== -1) {
+            this.invites.splice(index, 1)
+          }
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+  },
+  mounted() {
+    if (this.workspaceAccount) {
+      this.fetchMemberlists(this.workspaceAccount as string)
     }
-
-    const handleDeleteMember = async (memberId: string) => {
-      const res = await workspaceStore.handleDeleteMember(workspaceId as string, memberId)
-
-      if (res.success) {
-        toast.success(res.message)
-        currentToggle.value = true
-      } else {
-        toast.error(res.message)
-      }
-    }
-
-    const handleUpdatedAdmin = async (memberId: string, isAdmin: boolean) => {
-      console.log(memberId, isAdmin)
-      let res
-      if (isAdmin) {
-        res = await workspaceStore.handleRemoveAdmin(workspaceId as string, memberId)
-      } else {
-        res = await workspaceStore.handleAddAdmin(workspaceId as string, memberId)
-      }
-
-      if (res.success) {
-        toast.success(res.message)
-      } else {
-        toast.error(res.message)
-      }
-    }
-
-    return {
-      input_class: input_class('h-9', 'bg-white'),
-      email,
-      members: workspaceStore.membersList,
-      invites: workspaceStore.invitesList,
-      addToggle,
-      invitedToggle,
-      currentToggle,
-      handleAddMember,
-      handleDeleteMember,
-      handleUpdatedAdmin,
-      handleToggle,
-    }
+  },
+  computed: {
+    workspaceAccount() {
+      return this.$route.params.account
+    },
   },
 }
 </script>
@@ -132,12 +116,12 @@ export default {
             <VForm v-slot="{ errors }" @submit="handleAddMember">
               <div class="flex items-center gap-2">
                 <VField
-                  name="email"
+                  name="addEmail"
                   type="email"
                   rules="required"
                   placeholder="EMAIL"
-                  v-model="email"
-                  :class="[input_class, { 'border border-error': errors.email }]"
+                  v-model="addEmail"
+                  :class="[input_class, { 'border border-error': errors.addEmail }]"
                 />
                 <button
                   type="submit"
@@ -150,13 +134,19 @@ export default {
             </VForm>
           </div>
         </div>
-        <InvitedMembers :invitedToggle="invitedToggle" @invite-toggle="handleToggle('invited')" />
-        <CurrentMembers
-          :currentToggle="currentToggle"
-          @current-toggle="handleToggle('current')"
-          @updated-admin="handleUpdatedAdmin"
-          @delete-member="handleDeleteMember"
+        <InvitedMembers
+          :invitedToggle="inviteToggle"
+          @invite-toggle="handleToggle('invited')"
+          @cancelled-invite="handleCancelledInvite"
+          :invites="invites"
         />
+        <CurrentMembers
+          :memberToggle="memberToggle"
+          @member-toggle="handleToggle('member')"
+          :members="members"
+        />
+        <!-- @updated-admin="handleUpdatedAdmin"
+          @delete-member="handleDeleteMember" -->
       </div>
     </template>
   </WorkspaceLayout>

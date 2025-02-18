@@ -1,5 +1,4 @@
 <script lang="ts">
-import { useWorkspaceStore } from '@/stores/workspace'
 import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue'
 
 export default {
@@ -9,17 +8,18 @@ export default {
       type: Boolean,
       default: false,
     },
+    invites: {
+      type: Array as () => string[],
+      default: () => [],
+    },
   },
-  setup(props, { emit }) {
-    const workspaceStore = useWorkspaceStore()
-    const handleToggle = (type: 'add-member' | 'invited' | 'current') => {
-      emit('invite-toggle', type)
-    }
-    return {
-      invites: workspaceStore.invitesList,
-      handleToggle,
-      ...props,
-    }
+  methods: {
+    handleToggle(type: 'add-member' | 'invited' | 'current') {
+      this.$emit('invite-toggle', type)
+    },
+    handleCancelledInvitations(email: string) {
+      this.$emit('cancelled-invite', email)
+    },
   },
 }
 </script>
@@ -34,15 +34,33 @@ export default {
       <div class="">邀請中成員</div>
       <ChevronDownIcon class="w-4 h-4 transition" :class="invitedToggle && 'rotate-180'" />
     </button>
-    <div class="bg-white text-midnight-forest shadow-md flex flex-col" v-if="invitedToggle">
-      <a
-        v-for="(member, index) in invites"
-        :key="`invited-member-${member}`"
-        :class="index !== 0 && 'border-t border-muted-gray'"
-        :href="`mailto:${member}`"
-        class="w-full h-9 leading-9 px-4 text-sm hover:underline hover:underline-offset-2"
-        >{{ member }}</a
+    <div class="bg-white text-midnight-forest shadow-md" v-if="invitedToggle">
+      <div
+        class="w-full flex justify-center h-9 leading-9 text-muted-gray"
+        v-if="invites.length === 0"
       >
+        目前沒有邀請中的成員
+      </div>
+      <div class="flex flex-col" v-else>
+        <div
+          class="flex justify-between items-center text-sm px-4 w-full h-9 leading-9"
+          v-for="(member, index) in invites"
+          :key="`invited-member-${member}`"
+        >
+          <a
+            :class="index !== 0 && 'border-t border-muted-gray'"
+            :href="`mailto:${member}`"
+            class="hover:underline hover:underline-offset-2"
+            >{{ member }}</a
+          >
+          <button
+            class="px-2 h-6 leading-6 text-white bg-ocean-teal disabled:bg-muted-gray"
+            @click="handleCancelledInvitations(member)"
+          >
+            取消邀請
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>

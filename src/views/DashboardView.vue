@@ -1,30 +1,40 @@
 <script lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { toast } from 'vue3-toastify'
 import DefaultLayout from '@/components/common/layout/DefaultLayout.vue'
 import ModalLayout from '@/components/common/layout/ModalLayout.vue'
 import WorkspaceCard from '@/components/dashboard-page/WorkspaceCard.vue'
-import InvitationItem from '@/components/dashboard-page/InvitationItem.vue'
+import InvitationCard from '@/components/dashboard-page/InvitationCard.vue'
 import {
   acceptInvitations,
+  // acceptInvitations,
   getUserInvitations,
   getUserWorkspaces,
   rejectInvitations,
 } from '@/api/user'
-import { createdWorkspace } from '@/api/workspace'
-import { label_class, input_class } from '@/data/input-style'
+import { checkedWorkspaceAccount, createdWorkspace } from '@/api/workspace'
+import { labelClass, inputClass } from '@/styles/input-style'
+import { defineRule } from 'vee-validate'
+import { reactive } from 'vue'
 
 export type WorkspaceInput = {
   title: string
   account: string
 }
 
-type UserWorkspaceData = {
+type WorkspaceProps = {
   _id: string
-  account: string
   title: string
+  account: string
   memberCount: number
+  adminCount: number
+  invites: string[]
+  members: {
+    _id: string
+    userId: string
+    isAdmin: boolean
+  }[]
+  createdAt: string
+  updatedAt: string
+  isDisabled?: boolean
 }
 
 type UserInvitationsData = {
@@ -40,197 +50,201 @@ export default {
     DefaultLayout,
     ModalLayout,
     WorkspaceCard,
-    InvitationItem,
+    InvitationCard,
   },
-  setup() {
-    const { params } = useRoute()
-
-    const workspaces = ref<UserWorkspaceData[]>([])
-    const invitations = ref<UserInvitationsData[]>([])
-
-    const toggle = ref<boolean>(false)
-    const title = ref('')
-    const account = ref('')
-
-    const handleModalToggle = () => {
-      if (toggle.value) {
-        initializedModal()
-      } else {
-        toggle.value = true
-      }
+  data() {
+    return {
+      // params: this.$route.params,
+      label_class: labelClass,
+      input_class: inputClass(),
+      createdToggle: false,
+      workspaceInfo: {
+        title: '',
+        account: '@',
+      },
+      workspaces: reactive([] as WorkspaceProps[]),
+      invitations: reactive([] as UserInvitationsData[]),
     }
-    const initializedModal = () => {
-      toggle.value = false
-      title.value = ''
-      account.value = ''
-    }
+  },
+  created() {
+    defineRule('accountExists', async (value: string) => {
+      if (!value) return '帳號為必填項'
 
-    const handleCreatedWorkspace = async (payload: WorkspaceInput) => {
       try {
-        const data = await createdWorkspace(payload)
+        const res = await checkedWorkspaceAccount({ account: value })
 
-        if (data?.success) {
-          const workspace = data?.data.workspace
-          const new_workspace = {
-            _id: workspace._id,
-            account: workspace.account,
-            title: workspace.title,
-            memberCount: 1,
-          }
-
-          workspaces.value = [...workspaces.value, new_workspace]
-
-          toast.success('工作區成功建立!')
-          initializedModal()
-        } else {
-          toast.error('工作區建立失敗，請在試一次')
-        }
-      } catch (error) {
-        toast.error(`工作區建立失敗，請在試一次: ${error}`)
-      }
-    }
-
-    const handleConfirmInvitation = async (workspaceId: string) => {
-      try {
-        const data = await acceptInvitations(params?.userId as string, workspaceId)
-
-        if (data?.success) {
-          toast.success('已成功接受邀請')
-
-          // 更新工作列表
-
-          // 更新邀請列表
-          const updated_invitations = invitations.value.filter((item) => item.id !== workspaceId)
-          invitations.value = updated_invitations
-        } else {
-          toast.error('接受邀請失敗，請在試一次')
+        if (res?.success && res?.data) {
+          return '該帳號已被使用，請使用其他帳號'
         }
       } catch (error) {
         console.log(error)
+        return '驗證帳號時發生錯誤'
       }
-    }
-    const handleCancelInvitation = async (workspaceId: string) => {
-      try {
-        const data = await rejectInvitations(params?.userId as string, workspaceId)
 
-        if (data?.success) {
-          toast.success('已拒絕邀請')
-
-          // 更新邀請列表
-          const updated_invitations = invitations.value.filter((item) => item.id !== workspaceId)
-          invitations.value = updated_invitations
-        } else {
-          toast.error('拒絕邀請失敗，請在試一次')
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    }
-
-    // -------------------------- GET USERDATA --------------------------
-    const fetchUserWorkspace = async (userId: string) => {
-      if (!userId) return
+      return true
+    })
+  },
+  methods: {
+    async fetchUserWorkspace(userId: string) {
       try {
         const data = await getUserWorkspaces(userId)
         if (data?.success) {
-          workspaces.value = data?.data
+          const workspace_data = data?.data.map((workspace: WorkspaceProps) => {
+            const member = workspace.members.find((member) => member.userId === userId)
+            const isAdmin = member && member.isAdmin
+            return {
+              ...workspace,
+              isDisabled: !isAdmin,
+            }
+          })
+          this.workspaces = workspace_data
         }
       } catch (error) {
         console.log(error)
       }
-    }
-    const fetchUserInvitations = async (userId: string) => {
+    },
+    async fetchUserInvitations(userId: string) {
       try {
         const data = await getUserInvitations(userId)
         if (data?.success) {
-          invitations.value = data?.data
+          this.invitations = data?.data
         }
       } catch (error) {
         console.log(error)
       }
-    }
-    onMounted(() => {
-      fetchUserWorkspace(params?.userId as string)
-      fetchUserInvitations(params?.userId as string)
-    })
+    },
+    handleCreatedToggle() {
+      if (this.createdToggle) {
+        this.workspaceInfo = {
+          title: '',
+          account: '@',
+        }
+      }
+      this.createdToggle = !this.createdToggle
+    },
+    async handleCreatedWorkspace() {
+      try {
+        const res = await createdWorkspace(this.workspaceInfo)
+        if (res?.success) {
+          const data = res?.data.workspace
+          data.isDisabled = false
+          this.workspaces.push(data)
+          this.workspaceInfo = {
+            title: '',
+            account: '@',
+          }
+          this.createdToggle = false
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async handleAcceptInvite(workspaceId: string) {
+      try {
+        const res = await acceptInvitations(this.userId as string, workspaceId)
 
-    return {
-      workspaces,
-      invitations,
-      label_class,
-      input_class: input_class(),
-      handleCreatedWorkspace,
-      handleModalToggle,
-      handleConfirmInvitation,
-      handleCancelInvitation,
-      toggle,
-      title,
-      account,
+        if (res?.success) {
+          const data = res?.data
+          // console.log(data)
+          this.workspaces.push(data)
+          const updated_invites = this.invitations.filter((invite) => invite.id !== workspaceId)
+          this.invitations = updated_invites
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async handleCancelledInvite(workspaceId: string) {
+      try {
+        const res = await rejectInvitations(this.userId as string, workspaceId)
+        if (res?.success) {
+          const updated_invitations = this.invitations.filter((invite) => invite.id !== workspaceId)
+          this.invitations = updated_invitations
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+  },
+  mounted() {
+    if (this.userId) {
+      this.fetchUserWorkspace(this.userId as string)
+      this.fetchUserInvitations(this.userId as string)
     }
+  },
+  computed: {
+    userId() {
+      return this.$route.params.userId
+    },
   },
 }
 </script>
 
 <template>
   <DefaultLayout>
-    <div class="grid grid-cols-[2fr_1fr] gap-8">
-      <div class="flex flex-col gap-4">
-        <button
-          @click="handleModalToggle"
-          class="px-4 py-2 rounded-md h-12 flex justify-center items-center text-lg bg-midnight-forest-40 text-white hover:bg-midnight-forest hover:shadow-md hover:font-bold"
-        >
-          + 新增工作區
-        </button>
-        <div class="grid grid-cols-2 gap-4">
+    <div class="flex flex-col md:grid md:grid-cols-[2fr_1fr] gap-8">
+      <div class="flex flex-col gap-8">
+        <!-- header -->
+        <div class="grid grid-cols-[1fr_120px] gap-4 h-10">
+          <h1 class="h-full flex items-center bg-midnight-forest text-white px-4 font-bold text-xl">
+            我的工作區
+          </h1>
+          <button
+            @click="handleCreatedToggle"
+            class="w-[120px] h-full border-[1.5px] border-ocean-teal border-dashed text-ocean-teal rounded-sm hover:border-0 hover:bg-midnight-forest-60 hover:text-white"
+          >
+            + 新增工作區
+          </button>
+        </div>
+        <!-- body -->
+        <div class="text-muted-gray" v-if="workspaces.length === 0">
+          目前沒有工作區, 立即
+          <span>
+            <button
+              class="underline underline-offset-2 hover:font-bold"
+              @click="handleCreatedToggle"
+            >
+              新建
+            </button>
+          </span>
+        </div>
+        <div class="flex flex-col gap-4 lg:flex-row" v-else>
           <WorkspaceCard
             v-for="workspace in workspaces"
-            :id="workspace._id"
-            :key="workspace.account"
-            :account="workspace.account"
-            :title="workspace.title"
-            :member_num="workspace.memberCount"
-          />
+            :key="workspace?._id"
+            :id="workspace?._id"
+            :account="workspace?.account"
+            :title="workspace?.title"
+            :admin_num="workspace?.adminCount"
+            :member_num="workspace?.memberCount"
+            :disabled_delete="workspace.isDisabled"
+          ></WorkspaceCard>
         </div>
       </div>
-      <div class="flex flex-col gap-4">
-        <div
-          class="px-4 py-2 h-12 flex justify-between items-center font-bold text-lg"
-          :class="
-            invitations.length > 0
-              ? 'bg-golder-amber text-white shadow-lg'
-              : 'bg-white text-midnight-forest-40'
-          "
+      <div class="flex flex-col gap-8">
+        <h1
+          class="h-10 flex items-center bg-golder-amber text-white col-span-2 px-4 font-bold text-xl"
         >
-          <p>邀請清單</p>
-          <p
-            class="text-base font-medium bg-midnight-forest-40 text-white w-5 h-5 rounded-full flex justify-center items-center"
-          >
-            {{ invitations.length }}
-          </p>
-        </div>
-        <div>
-          <div
-            class="h-24 flex justify-center items-center text-midnight-forest-40"
-            v-if="invitations.length === 0"
-          >
-            目前無新邀請
-          </div>
-          <ul class="" v-else>
-            <InvitationItem
-              v-for="invitation in invitations"
-              :key="invitation.id"
-              :id="invitation.id"
-              :title="invitation.title"
-              :membersCount="invitation.members_count"
-              :invitesCount="invitation.invites_count"
-            />
-          </ul>
+          我的邀請
+        </h1>
+        <div class="text-muted-gray" v-if="invitations.length === 0">目前沒有工作區邀請</div>
+        <div class="flex flex-col gap-4 lg:flex-row" v-else>
+          <InvitationCard
+            v-for="invite in invitations"
+            :key="invite.id"
+            :id="invite.id"
+            :title="invite.title"
+            :account="invite.account"
+            :members-count="invite.members_count"
+            :invites-count="invite.invites_count"
+            @accept-invite="handleAcceptInvite"
+            @cancel-invite="handleCancelledInvite"
+          />
         </div>
       </div>
     </div>
   </DefaultLayout>
-
-  <ModalLayout title="新增工作區" :toggle="toggle" @update:toggle="handleModalToggle">
+  <ModalLayout title="新增工作區" :toggle="createdToggle" @update:toggle="handleCreatedToggle">
     <template #modal>
       <VForm class="flex flex-col gap-8" v-slot="{ errors }" @submit="handleCreatedWorkspace">
         <div class="flex flex-col gap-4">
@@ -241,7 +255,7 @@ export default {
               type="string"
               rules="required|max:20"
               placeholder="TITLE"
-              v-model="title"
+              v-model="workspaceInfo.title"
               :class="[input_class, { 'border border-error': errors.title }]"
             />
             <ErrorMessage name="title" class="text-error text-sm" />
@@ -251,9 +265,9 @@ export default {
             <VField
               name="account"
               type="string"
-              rules="required|min:3|max:20"
+              rules="required|min:3|max:20|accountExists"
               placeholder="ACCOUNT"
-              v-model="account"
+              v-model="workspaceInfo.account"
               :class="[input_class, { 'border border-error': errors.account }]"
             />
             <ErrorMessage name="account" class="text-error text-sm" />
@@ -261,13 +275,15 @@ export default {
         </div>
         <div class="grid grid-cols-2 gap-2 text-white">
           <button
-            @click="handleModalToggle"
+            @click="handleCreatedToggle"
             type="button"
-            class="bg-gray-30 w-full rounded-sm text-center py-1.5"
+            class="bg-disabled-gray w-full rounded-sm text-center py-1.5"
           >
             取消
           </button>
-          <button type="submit" class="bg-purple w-full rounded-sm text-center py-1.5">新增</button>
+          <button type="submit" class="bg-peach bg-purple w-full rounded-sm text-center py-1.5">
+            新增
+          </button>
         </div>
       </VForm>
     </template>

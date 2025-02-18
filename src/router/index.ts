@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Cookies from 'js-cookie'
 import { useAuthStore } from '@/stores/auth'
 
 const router = createRouter({
@@ -10,7 +9,7 @@ const router = createRouter({
       name: 'home',
       component: () => import('../views/HomeView.vue'),
       beforeEnter: async (to, from, next) => {
-        const token = Cookies.get('memberToken')
+        const token = localStorage.getItem('memberToken')
         const authStore = useAuthStore()
 
         if (token && authStore.isAuth) {
@@ -55,7 +54,7 @@ const router = createRouter({
       },
     },
     {
-      path: '/workspace/:workspaceId',
+      path: '/workspace/:account',
       name: 'workspace',
       children: [
         {
@@ -110,7 +109,7 @@ router.beforeEach(async (to, from, next) => {
   // console.log('from:', from)
 
   if (to.meta.requireAuth) {
-    const token = Cookies.get('memberToken')
+    const token = localStorage.getItem('memberToken')
     if (token) {
       next()
     } else {

@@ -1,59 +1,52 @@
 <script lang="ts">
-import { useForm } from 'vee-validate'
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import Cookies from 'js-cookie'
 import { toast } from 'vue3-toastify'
 import { login } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
-import { input_class } from '@/data/input-style'
+import { inputClass } from '@/styles/input-style'
 
-type LoginInput = {
+type LoginForm = {
   email: string
   password: string
 }
 
 export default {
-  setup() {
-    const authStore = useAuthStore()
-    const router = useRouter()
-    const { resetForm } = useForm()
-    const email = ref('')
-    const password = ref('')
-
-    const handleFormSubmit = async (value: LoginInput) => {
+  data() {
+    return {
+      authStore: useAuthStore(),
+      input_class: inputClass(),
+      login: {
+        email: '',
+        password: '',
+      } as LoginForm,
+    }
+  },
+  methods: {
+    async handleLoginSubmit() {
       try {
-        const data = await login(value)
-        console.log(data)
+        const data = await login(this.login)
 
         if (!data?.success) {
           toast.error('Email或密碼錯誤，請重新輸入')
-          resetForm()
           return
         }
 
         const { token, user } = data?.data
-        if (token && user) {
-          Cookies.set('memberToken', token, { expires: 7, path: '/' })
-          toast.success('登入成功，歡迎回來!')
 
-          authStore.updatedUser(user)
+        if (token && user) {
+          toast.success('登入成功，歡迎回來!')
+          localStorage.setItem('memberToken', token)
+
+          this.authStore.getUserData(user)
+          this.authStore.isAuth = true
 
           setTimeout(() => {
-            router.push(`/dashboard/${data?.data.user.id}`)
-          }, 3000)
+            this.$router.push(`/dashboard/${user.id}`)
+          }, 2000)
         }
       } catch (error) {
         console.log(error)
       }
-    }
-
-    return {
-      input_class: input_class(),
-      email,
-      password,
-      handleFormSubmit,
-    }
+    },
   },
 }
 </script>
@@ -71,7 +64,7 @@ export default {
       >
     </p>
   </div>
-  <VForm @submit="handleFormSubmit" v-slot="{ errors }" class="flex flex-col gap-8">
+  <VForm @submit="handleLoginSubmit" v-slot="{ errors }" class="flex flex-col gap-8">
     <div class="flex flex-col gap-4">
       <div class="flex flex-col gap-0.5">
         <VField
@@ -79,7 +72,7 @@ export default {
           type="email"
           rules="required"
           placeholder="EMAIL"
-          v-model="email"
+          v-model="login.email"
           :class="[input_class, { 'border border-error': errors.email }]"
         />
         <ErrorMessage name="email" class="text-error text-sm" />
@@ -90,7 +83,7 @@ export default {
           type="password"
           rules="required"
           placeholder="PASSWORD"
-          v-model="password"
+          v-model="login.password"
           :class="[input_class, { 'border border-error': errors.password }]"
         />
         <ErrorMessage name="password" class="text-error text-sm" />
