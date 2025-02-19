@@ -1,9 +1,5 @@
 <script lang="ts">
-export default {
-  setup() {
-    return {}
-  },
-}
+export default {}
 </script>
 
 <template>

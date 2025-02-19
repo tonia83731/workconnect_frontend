@@ -6,7 +6,7 @@ import {
   addWrokspaceAdmin,
   getWorkspaceMembers,
   removeWorkspaceMembers,
-  removeWrokspaceAdmin,
+  removeWorkspaceAdmin,
 } from '@/api/workspace'
 
 export type BucketData = {

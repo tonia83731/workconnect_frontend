@@ -5,7 +5,7 @@ const TODO_URL = (workspaceId: string) => defaultURL('todo', workspaceId)
 
 type TodoBasicType = {
   title: string
-  deadline?: number
+  deadline?: number | null
   assignments?: {
     userId: string
   }[]
@@ -20,6 +20,16 @@ export type TodoFullType = TodoBasicType & {
     text: string
   }[]
   order?: number
+}
+
+export type TodoEditType = TodoBasicType & {
+  workfolderId?: string
+  status: string
+  note?: string
+  checklists?: {
+    isChecked: boolean
+    text: string
+  }[]
 }
 
 export const getWorkbucketTodos = async (workbucketId: string) => {
@@ -52,13 +62,9 @@ export const createdWorkspaceTodo = async (workfolderId: string, payload: TodoBa
   }
 }
 
-export const updatedWorkspaceTodo = async (
-  workspaceId: string,
-  todoId: string,
-  payload: TodoFullType,
-) => {
+export const updatedWorkspaceTodo = async (todoId: string, payload: TodoEditType) => {
   try {
-    const url = TODO_URL(workspaceId) + `/${todoId}/update-todo`
+    const url = `/todo/${todoId}/update-todo`
     const response = await axiosAuthFetch('PUT', url, payload)
     return response?.data
   } catch (error) {
@@ -83,13 +89,9 @@ export const updatedTodoPosition = async (
   }
 }
 
-export const deleteWorkspaceTodo = async (
-  workspaceId: string,
-  workfolderId: string,
-  todoId: string,
-) => {
+export const deleteWorkspaceTodo = async (workfolderId: string, todoId: string) => {
   try {
-    const url = TODO_URL(workspaceId) + `/${workfolderId}/${todoId}/delete-todo`
+    const url = `/todo/${workfolderId}/${todoId}/delete-todo`
     const response = await axiosAuthFetch('DELETE', url)
     return response?.data
   } catch (error) {

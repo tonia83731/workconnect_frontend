@@ -3,13 +3,7 @@ import { defineRule } from 'vee-validate'
 import { toast } from 'vue3-toastify'
 import { register } from '@/api/auth'
 import { inputClass } from '@/styles/input-style'
-// import { transporter } from '@/data/sendEmail'
-
-interface RegisterForm {
-  name: string
-  email: string
-  password: string
-}
+import type { RegisterFormType } from '@/types/auth'
 
 export default {
   data() {
@@ -19,7 +13,7 @@ export default {
         name: '',
         email: '',
         password: '',
-      } as RegisterForm,
+      } as RegisterFormType,
       status: '',
     }
   },

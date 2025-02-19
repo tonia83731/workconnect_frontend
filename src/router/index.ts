@@ -89,11 +89,6 @@ const router = createRouter({
             requiredAuth: true,
           },
         },
-        // {
-        //   path: 'settings',
-        //   name: 'work-settings',
-        //   component: () => import('../views/SettingsView.vue'),
-        // },
       ],
     },
     // {

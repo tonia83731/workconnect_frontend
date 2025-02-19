@@ -14,36 +14,7 @@ import { checkedWorkspaceAccount, createdWorkspace } from '@/api/workspace'
 import { labelClass, inputClass } from '@/styles/input-style'
 import { defineRule } from 'vee-validate'
 import { reactive } from 'vue'
-
-export type WorkspaceInput = {
-  title: string
-  account: string
-}
-
-type WorkspaceProps = {
-  _id: string
-  title: string
-  account: string
-  memberCount: number
-  adminCount: number
-  invites: string[]
-  members: {
-    _id: string
-    userId: string
-    isAdmin: boolean
-  }[]
-  createdAt: string
-  updatedAt: string
-  isDisabled?: boolean
-}
-
-type UserInvitationsData = {
-  id: string
-  account: string
-  title: string
-  members_count: number
-  invites_count: number
-}
+import type { WorkspaceType, UserInvitationsType } from '@/types/workspaces'
 
 export default {
   components: {
@@ -54,7 +25,6 @@ export default {
   },
   data() {
     return {
-      // params: this.$route.params,
       label_class: labelClass,
       input_class: inputClass(),
       createdToggle: false,
@@ -62,8 +32,8 @@ export default {
         title: '',
         account: '@',
       },
-      workspaces: reactive([] as WorkspaceProps[]),
-      invitations: reactive([] as UserInvitationsData[]),
+      workspaces: reactive([] as WorkspaceType[]),
+      invitations: reactive([] as UserInvitationsType[]),
     }
   },
   created() {
@@ -89,7 +59,7 @@ export default {
       try {
         const data = await getUserWorkspaces(userId)
         if (data?.success) {
-          const workspace_data = data?.data.map((workspace: WorkspaceProps) => {
+          const workspace_data = data?.data.map((workspace: WorkspaceType) => {
             const member = workspace.members.find((member) => member.userId === userId)
             const isAdmin = member && member.isAdmin
             return {

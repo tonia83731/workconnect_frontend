@@ -16,21 +16,6 @@ import { useBucketStore } from '@/stores/bucket'
 
 const bucketStore = useBucketStore()
 
-export type TodoType = {
-  id: number
-  title: string
-  assign: string[]
-  status: 'pending' | 'processing' | 'completed'
-  note: string
-  checklist: CheckListType[]
-  deadline: string
-}
-export type CheckListType = {
-  id: number
-  text: string
-  isChecked: boolean
-}
-
 export default {
   components: {
     WorkspaceLayout,

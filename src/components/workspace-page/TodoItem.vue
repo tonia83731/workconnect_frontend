@@ -1,36 +1,17 @@
 <script lang="ts">
 import dayjs from 'dayjs'
 import Multiselect from 'vue-multiselect'
-import type { AssignmentType, CheckListType } from '@/stores/todos'
+import type { AssignmentType, CheckListType } from '@/types/todos'
+
 import { inputClass, labelClass } from '@/styles/input-style'
 import ModalLayout from '../common/layout/ModalLayout.vue'
 import CalendarIcon from '../icons/CalendarIcon.vue'
 import TrashIcon from '../icons/TrashIcon.vue'
 import CheckCircleIcon from '../icons/CheckCircleIcon.vue'
 import CheckSolidCircleIcon from '../icons/CheckSolidCircleIcon.vue'
-import { getWorkspaceTodo } from '@/api/todo'
+import { deleteWorkspaceTodo, getWorkspaceTodo, updatedWorkspaceTodo } from '@/api/todo'
 import { getWorkspaceFolders } from '@/api/workfolder'
-
-export type TodoEditData = {
-  _id: string
-  workfolderId: {
-    id: string
-    name: string
-  }
-  title: string
-  assignments: {
-    userId: string
-    name: string
-  }[]
-  status: {
-    id: string
-    name: string
-  }
-  note: string
-  checklists: CheckListType[]
-  deadline: number | null
-  order: number
-}
+import { convertTimeToTimestamp } from '@/helpers/formatedTime'
 
 export default {
   components: {
@@ -44,6 +25,11 @@ export default {
   props: {
     id: {
       type: String,
+      required: true,
+    },
+    folderId: {
+      type: String,
+      required: true,
     },
     title: {
       type: String,
@@ -58,7 +44,8 @@ export default {
       type: Array as () => AssignmentType[],
     },
     deadline: {
-      type: Number,
+      type: [Number, null],
+      default: null,
     },
     memberOpts: {
       type: Array as () => {
@@ -72,19 +59,14 @@ export default {
       label_class: labelClass,
       input_class: inputClass(),
       textarea_class: inputClass('h-auto'),
-      // todo: {
-      //   _id: '',
-      //   workfolderId: {
-      //     id: '',
-      //     name: '',
-      //   },
-      // },
-
       todoTitle: '',
       todoStatus: null,
       statusOpts: ['pending', 'processing', 'completed'],
       todoNote: '',
-      todoAssignments: [],
+      todoAssignments: [] as {
+        name: string
+        userId: string
+      }[],
       todoChecklists: [] as {
         _id: string
         isChecked: boolean
@@ -100,7 +82,6 @@ export default {
       }[],
       checklistText: '',
       todoDeadline: null as string | null,
-
       todoToggle: false,
     }
   },
@@ -134,7 +115,7 @@ export default {
           const formated_deadline = deadline ? dayjs(deadline).format('YYYY-MM-DD') : null
 
           const folder = this.folderOpts.find((item) => item?.id === workfolderId)
-          console.log(folder)
+          // console.log(folder)
 
           this.todoTitle = title
           this.todoStatus = status
@@ -151,16 +132,57 @@ export default {
         console.log(error)
       }
     },
+    initializedTodo() {
+      this.todoTitle = ''
+      this.todoStatus = null
+      this.todoNote = ''
+      this.todoAssignments = []
+      this.todoChecklists = []
+      this.todoWorkfolder = null
+      this.todoDeadline = null
+    },
     handleClosedTodoToggle() {
+      this.initializedTodo()
       this.todoToggle = false
     },
-    handleEditTodo() {
-      const body = {}
-      this.$emit('edit-todo', body)
-      this.todoToggle = false
+    async handleEditTodo() {
+      const body = {
+        workfolderId: this.todoWorkfolder?.id,
+        title: this.todoTitle,
+        status: this.todoStatus ? this.todoStatus : 'pending',
+        note: this.todoNote,
+        deadline: convertTimeToTimestamp(this.todoDeadline),
+        checklists: this.todoChecklists.map((list) => ({
+          isChecked: list.isChecked,
+          text: list.text,
+        })),
+        assignments: this.todoAssignments.map((assign) => ({ userId: assign.userId })),
+      }
+
+      try {
+        const res = await updatedWorkspaceTodo(this.id as string, body)
+        if (res?.success) {
+          const data = res?.data
+          console.log(data)
+          this.$emit('edit-todo', this.id, data)
+          // this.todoToggle = false
+        }
+      } catch (error) {
+        console.log(error)
+      }
     },
-    handleDeleteTodo(todoId: string) {
-      this.$emit('delete-todo', todoId)
+    async handleDeleteTodo(e: any, todoId: string) {
+      e.stopPropagation()
+      try {
+        const res = await deleteWorkspaceTodo(this.folderId, todoId)
+        if (res?.success) {
+          this.$emit('delete-todo', todoId)
+          this.initializedTodo()
+          this.todoToggle = false
+        }
+      } catch (error) {
+        console.log(error)
+      }
     },
     handleAddTodoChecklist() {
       if (this.checklistText.trim() === '') return
@@ -223,8 +245,8 @@ export default {
   <button @click="handleTodoToggle(id as string)" class="shadow-md bg-white rounded-sm w-full">
     <!-- title -->
     <div class="flex justify-between items-center h-10 px-4">
-      <h5 class="font-medium">{{ title }}</h5>
-      <button class="opacity-0 hover:opacity-100">
+      <h5 class="font-medium truncate">{{ title }}</h5>
+      <button class="opacity-0 hover:opacity-100" @click="(e) => handleDeleteTodo(e, id as string)">
         <TrashIcon class="w-4 h-4 text-midnight-forest" />
       </button>
     </div>
@@ -262,7 +284,7 @@ export default {
             class="w-full h-10 bg-pale-aqua px-2 focus:border-b focus:border-midnight-forest"
             placeholder="輸入代辦事項"
           />
-          <button @click="handleDeleteTodo(id as string)">
+          <button @click="(e) => handleDeleteTodo(e, id as string)">
             <TrashIcon class="w-5 h-5 text-midnight-forest-40 hover:text-midnight-forest" />
           </button>
         </div>
@@ -274,7 +296,7 @@ export default {
               :options="memberOpts"
               :multiple="true"
               label="name"
-              track-by="id"
+              track-by="userId"
               placeholder="請選擇指派人選"
             ></Multiselect>
           </div>
@@ -288,6 +310,7 @@ export default {
                 label="title"
                 track-by="id"
                 placeholder="請選擇工作群組"
+                :disabled="folderOpts.length <= 1"
               ></Multiselect>
             </div>
             <div class="flex flex-col gap-1">

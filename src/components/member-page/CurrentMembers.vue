@@ -1,15 +1,9 @@
 <script lang="ts">
 import ChevronDownIcon from '@/components/icons/ChevronDownIcon.vue'
 import { useAuthStore } from '@/stores/auth'
+import type { MemberType } from '@/types/members'
 
 const authStore = useAuthStore()
-
-export type MemberDataType = {
-  _id: string
-  name: string
-  email: string
-  isAdmin: boolean
-}
 
 export default {
   components: { ChevronDownIcon },
@@ -19,7 +13,7 @@ export default {
       default: true,
     },
     members: {
-      type: Array as () => MemberDataType[],
+      type: Array as () => MemberType[],
     },
   },
   data() {

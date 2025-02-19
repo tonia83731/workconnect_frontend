@@ -6,12 +6,6 @@ import { useAuthStore } from '@/stores/auth'
 import { inputClass } from '@/styles/input-style'
 import { toast } from 'vue3-toastify'
 
-export type RegisterInput = {
-  name: string
-  email: string
-  password?: string
-}
-
 const authStore = useAuthStore()
 
 export default {

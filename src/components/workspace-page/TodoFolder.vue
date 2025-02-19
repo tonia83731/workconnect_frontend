@@ -5,29 +5,8 @@ import { createdWorkspaceTodo, getWorkbucketTodos } from '@/api/todo'
 import { getWorkspaceMembers } from '@/api/workspace'
 import TrashIcon from '../icons/TrashIcon.vue'
 import TodoItem from './TodoItem.vue'
-
-export type CheckListType = {
-  _id: string
-  text: string
-  isChecked: boolean
-}
-export type AssignmentType = {
-  _id: string
-  userId: {
-    _id: string
-    name: string
-  }
-}
-export type TodoType = {
-  _id: string
-  title: string
-  status: 'pending' | 'processing' | 'completed'
-  deadline: number
-  note: string
-  assignments: AssignmentType[]
-  checklists: CheckListType[]
-  order: number
-}
+import { convertTimeToTimestamp } from '@/helpers/formatedTime'
+import type { TodoType } from '@/types/todos'
 
 export default {
   components: {
@@ -102,16 +81,11 @@ export default {
       }
     },
     async handleCreatedTodo() {
-      const date = this.todoDeadline ? new Date(this.todoDeadline) : null
-      if (date) {
-        date.setHours(23, 59, 59, 999)
-      }
-
       const assignments = this.todoAssign.map((user) => ({ userId: user.userId }))
 
       const body = {
         title: this.todoTitle,
-        deadline: date?.getTime(),
+        deadline: convertTimeToTimestamp(this.todoDeadline),
         assignments,
       }
       try {
@@ -127,6 +101,16 @@ export default {
       } catch (error) {
         console.log(error)
       }
+    },
+    handleUpdatedTodo(todoId: string, data: any) {
+      const updated_todos = this.todos.map((todo) => {
+        return todo._id === todoId ? data : todo
+      })
+      this.todos = updated_todos
+    },
+    handleDeletedTodo(todoId: string) {
+      const updated_todos = this.todos.filter((todo) => todo._id !== todoId)
+      this.todos = updated_todos
     },
   },
   mounted() {
@@ -210,12 +194,15 @@ export default {
         v-for="todo in todos"
         :key="todo._id"
         :id="todo._id"
+        :folderId="todo.workfolderId"
         :title="todo.title"
         :status="todo.status"
         :checklists="todo.checklists"
         :assignments="todo.assignments"
         :deadline="todo.deadline"
         :memberOpts="members"
+        @edit-todo="handleUpdatedTodo"
+        @delete-todo="handleDeletedTodo"
       />
     </div>
   </div>

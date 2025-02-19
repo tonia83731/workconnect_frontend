@@ -3,11 +3,7 @@ import { toast } from 'vue3-toastify'
 import { login } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 import { inputClass } from '@/styles/input-style'
-
-type LoginForm = {
-  email: string
-  password: string
-}
+import type { LoginFormType } from '@/types/auth'
 
 export default {
   data() {
@@ -17,7 +13,7 @@ export default {
       login: {
         email: '',
         password: '',
-      } as LoginForm,
+      } as LoginFormType,
     }
   },
   methods: {

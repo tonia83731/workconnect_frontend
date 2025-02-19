@@ -9,17 +9,7 @@ import {
 } from '@/api/workfolder'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
 import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
-
-type WorkfolderType = {
-  _id: string
-  workspaceId: string
-  workbucketId: string
-  title: string
-  // todos: string[]
-  order: number
-  createdAt: string
-  updatedAt: string
-}
+import type { WorkfolderType } from '@/types/folders'
 
 export default {
   components: {

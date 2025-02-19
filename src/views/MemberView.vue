@@ -2,7 +2,7 @@
 <script lang="ts">
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
 import InvitedMembers from '@/components/member-page/InvitedMembers.vue'
-import CurrentMembers, { type MemberDataType } from '@/components/member-page/CurrentMembers.vue'
+import CurrentMembers from '@/components/member-page/CurrentMembers.vue'
 import {
   addWorkspaceMembers,
   cancelledInvitations,
@@ -10,6 +10,7 @@ import {
   removeWorkspaceAdmin,
   removeWorkspaceMembers,
 } from '@/api/workspace'
+import type { MemberType } from '@/types/members'
 import { reactive } from 'vue'
 import { addWrokspaceAdmin } from '../api/workspace'
 
@@ -28,7 +29,7 @@ export default {
       inviteToggle: false,
       memberToggle: true,
       invites: reactive([] as string[]),
-      members: reactive([] as MemberDataType[]),
+      members: reactive([] as MemberType[]),
     }
   },
   methods: {

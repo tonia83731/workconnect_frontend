@@ -1,6 +1,8 @@
 <script lang="ts">
 import CrossIcon from '@/components/icons/CrossIcon.vue'
 import { onMounted, onUnmounted, ref } from 'vue'
+
+// edit here
 export default {
   components: {
     CrossIcon,
