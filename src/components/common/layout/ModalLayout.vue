@@ -1,8 +1,6 @@
 <script lang="ts">
 import CrossIcon from '@/components/icons/CrossIcon.vue'
-import { onMounted, onUnmounted, ref } from 'vue'
 
-// edit here
 export default {
   components: {
     CrossIcon,
@@ -16,26 +14,23 @@ export default {
     },
   },
   emit: ['update:toggle'],
-  setup(props, { emit }) {
-    const modalRef = ref<HTMLElement | null>(null)
-
-    const handleToggleClickOutside = (event: MouseEvent) => {
-      if (modalRef.value && !modalRef.value.contains(event.target as Node)) {
-        emit('update:toggle', false)
-      }
-    }
-
-    onMounted(() => {
-      document.addEventListener('mousedown', handleToggleClickOutside)
-    })
-    onUnmounted(() => {
-      document.removeEventListener('mousedown', handleToggleClickOutside)
-    })
-
+  data() {
     return {
-      modalRef,
-      ...props,
+      modalRef: null as HTMLElement | null,
     }
+  },
+  methods: {
+    handleToggleClickOutside(event: MouseEvent) {
+      if (this.modalRef && !this.modalRef.contains(event.target as Node)) {
+        this.$emit('update:toggle', false)
+      }
+    },
+  },
+  mounted() {
+    document.addEventListener('mousedown', this.handleToggleClickOutside)
+  },
+  beforeUnmount() {
+    document.removeEventListener('mousedown', this.handleToggleClickOutside)
   },
 }
 </script>
@@ -58,7 +53,10 @@ export default {
             <CrossIcon class="w-5 h-5" />
           </button>
         </div>
-        <div class="px-4 py-2 h-full max-h-[360px] overflow-y-auto overflow-x-hidden scroll">
+        <div
+          class="px-4 py-2 h-full max-h-[360px] overflow-y-auto overflow-x-hidden scroll"
+          @click.stop
+        >
           <slot name="modal"></slot>
           <RouterView />
         </div>

@@ -5,7 +5,17 @@ const CHAT_URL = (workspaceId: string) => defaultURL('chat', workspaceId)
 
 export const getChatMessages = async (workspaceId: string) => {
   try {
-    const url = CHAT_URL(workspaceId) + '/messages'
+    const url = `/chat/${workspaceId}/messages`
+    const response = await axiosAuthFetch('GET', url)
+    return response?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const getChatMembers = async (workspaceId: string) => {
+  try {
+    const url = `/chat/${workspaceId}/members`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
