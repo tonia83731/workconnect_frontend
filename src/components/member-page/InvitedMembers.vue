@@ -46,13 +46,11 @@ export default {
           class="flex justify-between items-center text-sm px-4 w-full h-9 leading-9"
           v-for="(member, index) in invites"
           :key="`invited-member-${member}`"
+          :class="index !== 0 && 'border-t border-muted-gray'"
         >
-          <a
-            :class="index !== 0 && 'border-t border-muted-gray'"
-            :href="`mailto:${member}`"
-            class="hover:underline hover:underline-offset-2"
-            >{{ member }}</a
-          >
+          <a :href="`mailto:${member}`" class="hover:underline hover:underline-offset-2">{{
+            member
+          }}</a>
           <button
             class="px-2 h-6 leading-6 text-white bg-ocean-teal disabled:bg-muted-gray"
             @click="handleCancelledInvitations(member)"

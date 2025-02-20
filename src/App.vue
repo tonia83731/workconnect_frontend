@@ -15,6 +15,7 @@ const checkedUserAuth = async () => {
     const res = await checkedAuthentication()
     if (res?.success) {
       const data = res?.data
+      console.log(data)
       const isAuth = data.isAuth
 
       if (!isAuth) {
@@ -31,6 +32,8 @@ const checkedUserAuth = async () => {
           user: {
             name: data.user.name,
             email: data.user.email,
+            bgColor: data.user.bgColor,
+            textColor: data.user.textColor,
           },
         })
       }

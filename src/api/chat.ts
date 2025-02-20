@@ -1,11 +1,8 @@
 import { axiosAuthFetch } from './index'
-import { defaultURL } from './workspace'
 
-const CHAT_URL = (workspaceId: string) => defaultURL('chat', workspaceId)
-
-export const getChatMessages = async (workspaceId: string) => {
+export const getChatMessages = async (workspaceAccount: string) => {
   try {
-    const url = `/chat/${workspaceId}/messages`
+    const url = `/chat/${workspaceAccount}/messages`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
@@ -13,9 +10,9 @@ export const getChatMessages = async (workspaceId: string) => {
   }
 }
 
-export const getChatMembers = async (workspaceId: string) => {
+export const getChatMembers = async (workspaceAccount: string) => {
   try {
-    const url = `/chat/${workspaceId}/members`
+    const url = `/chat/${workspaceAccount}/members`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
@@ -24,7 +21,7 @@ export const getChatMembers = async (workspaceId: string) => {
 }
 
 export const postMessage = async (
-  workspaceId: string,
+  workspaceAccount: string,
   payload: {
     chatId: string
     senderId: string
@@ -32,7 +29,7 @@ export const postMessage = async (
   },
 ) => {
   try {
-    const url = CHAT_URL(workspaceId) + '/send-message'
+    const url = `/chat/${workspaceAccount}/send-message`
     const response = await axiosAuthFetch('POST', url, payload)
     return response?.data
   } catch (error) {

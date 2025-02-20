@@ -4,6 +4,8 @@ type UserProfileData = {
   id: string
   name: string
   email: string
+  bgColor: string
+  textColor: string
 }
 
 type AuthStateProps = {
@@ -12,6 +14,9 @@ type AuthStateProps = {
   user: {
     name: string
     email: string
+    bgColor: string
+    textColor: string
+    // color: string
   } | null
   isMember: boolean | null
   adminStatus: boolean | null
@@ -32,6 +37,8 @@ export const useAuthStore = defineStore('auth', {
       this.user = {
         name: userData.name,
         email: userData.email,
+        bgColor: userData.bgColor,
+        textColor: userData.textColor,
       }
       this.userId = userData.id
     },
@@ -41,6 +48,8 @@ export const useAuthStore = defineStore('auth', {
       user: {
         name: string
         email: string
+        bgColor: string
+        textColor: string
       } | null
     }) {
       this.isAuth = userData.isAuth
@@ -49,6 +58,8 @@ export const useAuthStore = defineStore('auth', {
         ? {
             name: userData.user?.name,
             email: userData.user?.email,
+            bgColor: userData.user?.bgColor,
+            textColor: userData.user?.textColor,
           }
         : null
     },

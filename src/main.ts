@@ -21,6 +21,9 @@ import 'vue-multiselect/dist/vue-multiselect.min.css'
 import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
 
+// import Vue3ColorPicker from 'vue3-colorpicker'
+// import 'vue3-colorpicker/style.css'
+
 import App from './App.vue'
 import router from './router'
 
@@ -48,6 +51,8 @@ app.use(Vue3Toastify, {
   autoClose: 3000,
   hideProgressBar: true,
 } as ToastContainerOptions)
+
+// app.use(Vue3ColorPicker)
 
 app.component('VField', Field)
 app.component('VForm', Form)

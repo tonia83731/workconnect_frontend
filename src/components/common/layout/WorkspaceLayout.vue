@@ -16,6 +16,8 @@ import TrashIcon from '@/components/icons/TrashIcon.vue'
 import PinIcon from '@/components/icons/PinnedIcon.vue'
 import PinOutlineIcon from '@/components/icons/PinnedOutlineIcon.vue'
 import DotsIcon from '@/components/icons/EllipsisVerticalIcon.vue'
+import SettingIcon from '@/components/icons/SettingIcon.vue'
+import SettingSolidIcon from '@/components/icons/SettingSolidIcon.vue'
 import ArrowLongRightIcon from '@/components/icons/ArrowLongRightIcon.vue'
 import { getWorkspaceBuckets, updatedPinnedWorkspaceBucket } from '@/api/workbucket'
 import { useAuthStore } from '@/stores/auth'
@@ -24,7 +26,7 @@ import { useBucketStore } from '@/stores/bucket'
 // import { getUserProfile } from '@/api/user'
 import { toast } from 'vue3-toastify'
 import { checkedWorkspaceAuth } from '@/api/workspace'
-
+import { checkedAuthentication } from '@/api/auth'
 const authStore = useAuthStore()
 const bucketStore = useBucketStore()
 
@@ -63,6 +65,8 @@ export default {
     PinOutlineIcon,
     DotsIcon,
     ArrowLongRightIcon,
+    SettingIcon,
+    SettingSolidIcon,
   },
   props: {
     mainTitle: {
@@ -100,6 +104,50 @@ export default {
     },
   },
   methods: {
+    async checkedUserAuth() {
+      try {
+        const res = await checkedAuthentication()
+        if (res?.success) {
+          const data = res?.data
+          // console.log(data)
+          const isAuth = data.isAuth
+
+          if (!isAuth) {
+            authStore.logout()
+            toast.error('權限不足，請重新登入')
+
+            setTimeout(() => {
+              this.$router.push({ name: 'login' })
+            }, 2000)
+          } else {
+            authStore.updatedUserAuth({
+              isAuth,
+              userId: data.userId,
+              user: {
+                name: data.user.name,
+                email: data.user.email,
+                bgColor: data.user.bgColor,
+                textColor: data.user.textColor,
+              },
+            })
+          }
+        } else {
+          authStore.logout()
+          toast.error('權限不足，請重新登入')
+
+          setTimeout(() => {
+            this.$router.push({ name: 'login' })
+          }, 2000)
+        }
+      } catch (error) {
+        authStore.logout()
+        toast.error(`權限不足，請重新登入: ${error}`)
+
+        setTimeout(() => {
+          this.$router.push({ name: 'login' })
+        }, 2000)
+      }
+    },
     async checkWorkspaceAuthentication(workspaceAccount: string) {
       try {
         const res = await checkedWorkspaceAuth(workspaceAccount)
@@ -166,6 +214,13 @@ export default {
           icon: 'ChatIcon',
           icon_active: 'ChatSolidIcon',
         },
+        {
+          name: 'setting',
+          href: `/workspace/${this.workspaceAccount}/setting`,
+          title: '工作區設定',
+          icon: 'SettingIcon',
+          icon_active: 'SettingSolidIcon',
+        },
       ]
       this.todolink.href = `/workspace/${this.workspaceAccount}/todo`
     },
@@ -200,11 +255,13 @@ export default {
     },
   },
   mounted() {
+    this.checkedUserAuth()
     if (this.workspaceAccount) {
       this.checkWorkspaceAuthentication(this.workspaceAccount as string)
       this.fetchBuckets(this.workspaceAccount as string)
     }
     this.updateLinks()
+    // console.log(authStore.user)
   },
   computed: {
     workspaceAccount() {
@@ -292,9 +349,11 @@ export default {
           :key="name"
           :to="href"
           class="flex gap-2 items-center px-4 py-2"
+          :class="{
+            'bg-midnight-forest text-white': activeLink === href,
+            'bg-white text-midnight-forest': activeLink !== href,
+          }"
         >
-          <!-- :class="{ 'bg-midnight-forest text-white': activeLink === href, 'bg-white
-          text-midnight-forest': activeLink !== href, }" -->
           <component :is="activeLink === href ? icon_active : icon" class="w-6 h-6" />
           <p class="font-medium text-lg">{{ title }}</p>
         </RouterLink>

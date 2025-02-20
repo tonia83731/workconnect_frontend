@@ -21,10 +21,16 @@ export default {
   },
   computed: {
     userId() {
-      return authStore.userId
+      return this.$route.params.userId || authStore.userId
     },
     userName() {
       return authStore.user?.name || ''
+    },
+    userBgColor() {
+      return authStore.user?.bgColor || '#AEDADA'
+    },
+    userTextColor() {
+      return authStore.user?.textColor || '#016766'
     },
   },
 }
@@ -38,11 +44,14 @@ export default {
       <div class="flex items-center gap-2">
         <RouterLink :to="`/profile/${userId}`" class="flex flex-col items-center gap-0.5 group">
           <div
-            class="w-8 h-8 rounded-full bg-soft-aqua flex justify-center items-center group-hover:border group-hover:border-ocean-teal"
+            class="w-8 h-8 rounded-full flex justify-center items-center group-hover:border"
+            :style="{ backgroundColor: userBgColor, borderColor: userTextColor }"
           >
-            <UserIcon class="text-ocean-teal" />
+            <UserIcon :style="{ color: userTextColor }" />
           </div>
-          <p class="text-xs text-ocean-teal hidden group-hover:block">{{ userName }}</p>
+          <p class="text-xs hidden group-hover:block" :style="{ color: userTextColor }">
+            {{ userName }}
+          </p>
         </RouterLink>
         <button @click="handleLogout" class="flex flex-col items-center gap-0.5 group">
           <div

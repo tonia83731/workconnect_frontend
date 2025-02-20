@@ -12,7 +12,7 @@ export const getUserProfile = async (userId: string) => {
 }
 export const updatedUserProfile = async (
   userId: string,
-  payload: { name: string; email: string },
+  payload: { name: string; email: string; bgColor: string; textColor: string },
 ) => {
   try {
     const response = await axiosAuthFetch('PUT', `${USER_URL}/${userId}/updated-profile`, payload)

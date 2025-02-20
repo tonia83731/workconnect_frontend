@@ -2,6 +2,7 @@
 import UserGroupIcon from '../icons/UserGroupIcon.vue'
 import KeyIcon from '../icons/KeyIcon.vue'
 import TrashIcon from '../icons/TrashIcon.vue'
+import { inputClass } from '@/styles/input-style'
 
 export default {
   components: {
@@ -33,11 +34,24 @@ export default {
       default: false,
     },
   },
+  data() {
+    return {
+      editToggle: false,
+      workspaceTitle: this.title,
+      input_class: inputClass('h-8', 'bg-white'),
+    }
+  },
   methods: {
     async handleDeletedWorkspace() {
       // console.log('click')
     },
+    async handleWorkspaceEdit() {
+      this.editToggle = !this.editToggle
+      if (this.editToggle) {
+      }
+    },
   },
+  computed: {},
 }
 </script>
 

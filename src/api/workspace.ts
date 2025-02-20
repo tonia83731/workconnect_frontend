@@ -5,8 +5,6 @@ export const defaultURL = (
   workspaceAccount: string,
 ) => `/${type}/${workspaceAccount}`
 
-const WORKSPACE_URL = (workspaceId: string) => defaultURL('workspace', workspaceId)
-
 export const createdWorkspace = async (payload: { account: string; title: string }) => {
   try {
     const respnose = await axiosAuthFetch('POST', '/create-workspace', payload)
@@ -44,6 +42,17 @@ export const addWorkspaceMembers = async (workspaceAccount: string, payload: { e
     console.log(error)
   }
 }
+
+export const getWorkspaceInfo = async (workspaceAccount: string) => {
+  try {
+    const url = `/workspace/${workspaceAccount}/workspace-info`
+    const respnose = await axiosAuthFetch('GET', url)
+    return respnose?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
 export const cancelledInvitations = async (
   workspaceAccount: string,
   payload: { email: string },
@@ -59,7 +68,7 @@ export const cancelledInvitations = async (
 
 export const removeWorkspaceMembers = async (workspaceAccount: string, memberId: string) => {
   try {
-    const url = `/workspace/${workspaceAccount}//${memberId}/remove-member`
+    const url = `/workspace/${workspaceAccount}/${memberId}/remove-member`
     const respnose = await axiosAuthFetch('DELETE', url)
     return respnose?.data
   } catch (error) {
@@ -67,9 +76,9 @@ export const removeWorkspaceMembers = async (workspaceAccount: string, memberId:
   }
 }
 
-export const updatedWorkspace = async (workspaceId: string, payload: { title: string }) => {
+export const updatedWorkspace = async (workspaceAccount: string, payload: { title: string }) => {
   try {
-    const url = WORKSPACE_URL(workspaceId) + '/update-workspace'
+    const url = `/workspace/${workspaceAccount}/update-workspace`
     const respnose = await axiosAuthFetch('PUT', url, payload)
     return respnose?.data
   } catch (error) {
