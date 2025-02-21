@@ -88,25 +88,9 @@ export default {
           const data = res?.data
           console.log(data)
           const { message } = data
-          const member = this.members.find((member) => member.id === message.senderId)
-
-          console.log(member)
-          const msg = {
-            ...data,
-            senderId: {
-              _id: data.senderId,
-              name: member?.name,
-              email: '#',
-            },
-          }
-          this.messages.push(msg)
+          this.messages.push(message)
           this.message = ''
-          socket.emit('send_message', {
-            chatId: this.chatId,
-            userId: this.userId,
-            name: member?.name,
-            text: data.text,
-          })
+          socket.emit('send_message', message)
         }
       } catch (error) {
         console.log(error)
@@ -118,15 +102,23 @@ export default {
     if (this.workspaceAccount) {
       this.fetchChatMembers(this.workspaceAccount as string)
       this.fetchChatWithMessages(this.workspaceAccount as string)
-
-      socket.emit('join_chat', { chatId: this.chatId, userId: this.userId, name: this.userName })
-
-      socket.on('updated_online_users', (onlineUsers: string[]) => {
-        this.members.forEach((member) => {
-          member.isOnline = onlineUsers.includes(member.id)
-        })
-      })
     }
+    socket.emit('join_chat', { chatId: this.chatId, userId: this.userId, name: this.userName })
+
+    socket.on('updated_online_users', (onlineUsers: string[]) => {
+      // console.log('Online Users:', onlineUsers)
+      // console.log('Before Update:', this.members)
+      this.members = this.members.map((member) => ({
+        ...member,
+        isOnline: onlineUsers.includes(member.id),
+      }))
+      // console.log('After Update:', this.members)
+    })
+
+    socket.on('receive_message', (message: ChatMessageType) => {
+      console.log('New message received:', message)
+      this.messages.push(message)
+    })
   },
   computed: {
     userId() {

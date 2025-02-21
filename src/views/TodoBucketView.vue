@@ -95,6 +95,13 @@ export default {
       }
     },
   },
+  watch: {
+    bucketId(newBucketId, currBucketId) {
+      if (newBucketId && newBucketId !== currBucketId) {
+        this.fecthWorkfolders(newBucketId)
+      }
+    },
+  },
 }
 </script>
 
