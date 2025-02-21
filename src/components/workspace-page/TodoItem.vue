@@ -1,7 +1,7 @@
 <script lang="ts">
 import dayjs from 'dayjs'
 import Multiselect from 'vue-multiselect'
-import type { AssignmentType, CheckListType } from '@/types/todos'
+import type { AssignmentFormatedType, CheckListType } from '@/types/todos'
 
 import { inputClass, labelClass } from '@/styles/input-style'
 import ModalLayout from '../common/layout/ModalLayout.vue'
@@ -9,9 +9,13 @@ import CalendarIcon from '../icons/CalendarIcon.vue'
 import TrashIcon from '../icons/TrashIcon.vue'
 import CheckCircleIcon from '../icons/CheckCircleIcon.vue'
 import CheckSolidCircleIcon from '../icons/CheckSolidCircleIcon.vue'
-import { deleteWorkspaceTodo, getWorkspaceTodo, updatedWorkspaceTodo } from '@/api/todo'
+import { getWorkspaceTodo } from '@/api/todo'
 import { getWorkspaceFolders } from '@/api/workfolder'
 import { convertTimeToTimestamp } from '@/helpers/formatedTime'
+import { useFolderStore } from '@/stores/folders'
+import { toast } from 'vue3-toastify'
+
+const folderStore = useFolderStore()
 
 export default {
   components: {
@@ -41,7 +45,7 @@ export default {
       type: Array as () => CheckListType[],
     },
     assignments: {
-      type: Array as () => AssignmentType[],
+      type: Array as () => AssignmentFormatedType[],
     },
     deadline: {
       type: [Number, null],
@@ -54,6 +58,7 @@ export default {
       }[],
     },
   },
+
   data() {
     return {
       label_class: labelClass,
@@ -145,9 +150,9 @@ export default {
       this.initializedTodo()
       this.todoToggle = false
     },
-    async handleEditTodo() {
+    handleEditTodo() {
       const body = {
-        workfolderId: this.todoWorkfolder?.id,
+        // workfolderId: this.todoWorkfolder?.id,
         title: this.todoTitle,
         status: this.todoStatus ? this.todoStatus : 'pending',
         note: this.todoNote,
@@ -158,30 +163,18 @@ export default {
         })),
         assignments: this.todoAssignments.map((assign) => ({ userId: assign.userId })),
       }
-
-      try {
-        const res = await updatedWorkspaceTodo(this.id as string, body)
-        if (res?.success) {
-          const data = res?.data
-          console.log(data)
-          this.$emit('edit-todo', this.id, data)
-          // this.todoToggle = false
-        }
-      } catch (error) {
-        console.log(error)
-      }
+      folderStore.onEditTodo(this.folderId, this.id as string, body)
     },
     async handleDeleteTodo(e: any, todoId: string) {
       e.stopPropagation()
-      try {
-        const res = await deleteWorkspaceTodo(this.folderId, todoId)
-        if (res?.success) {
-          this.$emit('delete-todo', todoId)
-          this.initializedTodo()
-          this.todoToggle = false
-        }
-      } catch (error) {
-        console.log(error)
+      const result = await folderStore.onDeletedTodo(this.folderId, todoId as string)
+
+      if (result) {
+        this.$emit('delete-todo', todoId)
+        this.initializedTodo()
+        this.todoToggle = false
+      } else {
+        toast.error('代辦清單刪除失敗')
       }
     },
     handleAddTodoChecklist() {
@@ -225,12 +218,6 @@ export default {
     formatedDate() {
       return this.deadline ? dayjs(this.deadline).format('YYYY-MM-DD') : '未設定'
     },
-    formatedAssignments() {
-      return this.assignments?.map((assign) => ({
-        userId: assign.userId._id,
-        name: assign.userId.name,
-      }))
-    },
     minDate() {
       return new Date().toISOString().split('T')[0]
     },
@@ -242,10 +229,12 @@ export default {
 </script>
 
 <template>
-  <button @click="handleTodoToggle(id as string)" class="shadow-md bg-white rounded-sm w-full">
+  <div class="shadow-md bg-white rounded-sm w-full">
     <!-- title -->
     <div class="flex justify-between items-center h-10 px-4">
-      <h5 class="font-medium truncate">{{ title }}</h5>
+      <button @click="handleTodoToggle(id as string)" class="font-medium truncate">
+        {{ title }}
+      </button>
       <button class="opacity-0 hover:opacity-100" @click="(e) => handleDeleteTodo(e, id as string)">
         <TrashIcon class="w-4 h-4 text-midnight-forest" />
       </button>
@@ -263,17 +252,18 @@ export default {
       </div>
       <div class="flex items-center">
         <div
-          v-for="(assign, index) in formatedAssignments"
+          v-for="assign in assignments"
           class="w-8 h-8 -ml-2 text-white rounded-full flex justify-center items-center drop-shadow-xl"
-          :class="index === 0 ? 'bg-sky-blue' : index === 1 ? 'bg-ocean-teal' : 'bg-golder-amber'"
           :key="assign.userId"
           :title="assign.name"
+          :style="{ backgroundColor: assign.bgColor, color: assign.textColor }"
         >
-          {{ assign.name[0] }}
+          <!-- :class="index === 0 ? 'bg-sky-blue' : index === 1 ? 'bg-ocean-teal' : 'bg-golder-amber'" -->
+          {{ assign.name ? assign.name[0] : '...' }}
         </div>
       </div>
     </div>
-  </button>
+  </div>
   <ModalLayout title="代辦事項" :toggle="todoToggle" @update:toggle="handleClosedTodoToggle">
     <template #modal>
       <div class="flex flex-col gap-8">
@@ -310,8 +300,9 @@ export default {
                 label="title"
                 track-by="id"
                 placeholder="請選擇工作群組"
-                :disabled="folderOpts.length <= 1"
+                disabled
               ></Multiselect>
+              <!-- :disabled="folderOpts.length <= 1" -->
             </div>
             <div class="flex flex-col gap-1">
               <h5 :class="label_class">截止日期</h5>

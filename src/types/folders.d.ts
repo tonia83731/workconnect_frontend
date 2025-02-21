@@ -4,7 +4,7 @@ export type WorkfolderType = {
   workbucketId: string
   title: string
   order: number
-  todos?: string[]
+  todos: TodoType[]
   createdAt: string
   updatedAt: string
 }

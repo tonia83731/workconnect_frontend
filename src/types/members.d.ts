@@ -3,4 +3,6 @@ export type MemberType = {
   name: string
   email: string
   isAdmin: boolean
+  bgColor: string
+  textColor: string
 }

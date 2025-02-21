@@ -9,6 +9,18 @@ export type TodoType = {
   checklists: CheckListType[]
   deadline: number | null
 }
+
+export type TodoFormatedType = {
+  _id: string
+  workfolderId: string
+  title: string
+  assignments: AssignmentFormatedType[]
+  status: 'pending' | 'processing' | 'completed'
+  note: string
+  checklists: CheckListType[]
+  deadline: number | null
+}
+
 export type CheckListType = {
   id: number
   text: string
@@ -19,7 +31,24 @@ export type AssignmentType = {
   userId: {
     _id: string
     name: string
+    bgColor: string
+    textColor: string
   }
+}
+
+export type AssignmentFormatedType = {
+  userId: string
+  name: string
+  bgColor: string
+  textColor: string
+}
+
+export type TodoCreateType = {
+  title: string
+  deadline: number | null
+  assignments: {
+    userId: string
+  }[]
 }
 
 export type TodoEditType = {

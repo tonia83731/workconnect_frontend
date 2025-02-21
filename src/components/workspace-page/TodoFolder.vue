@@ -1,12 +1,15 @@
 <script lang="ts">
-import { reactive } from 'vue'
 import Multiselect from 'vue-multiselect'
-import { createdWorkspaceTodo, getWorkbucketTodos } from '@/api/todo'
+import type { TodoFormatedType } from '@/types/todos'
 import { getWorkspaceMembers } from '@/api/workspace'
+import { convertTimeToTimestamp } from '@/helpers/formatedTime'
 import TrashIcon from '../icons/TrashIcon.vue'
 import TodoItem from './TodoItem.vue'
-import { convertTimeToTimestamp } from '@/helpers/formatedTime'
-import type { TodoType } from '@/types/todos'
+import { useFolderStore } from '@/stores/folders'
+import { toast } from 'vue3-toastify'
+import type { MemberType } from '@/types/members'
+
+const folderStore = useFolderStore()
 
 export default {
   components: {
@@ -23,11 +26,16 @@ export default {
       type: String,
       defaultValue: '',
     },
+    todos: {
+      type: Array as () => TodoFormatedType[],
+      defaultValue: [],
+      required: true,
+    },
   },
   data() {
     return {
-      todos: reactive([] as TodoType[]),
-      members: [],
+      memberOpts: [],
+      // members: [],
       folderTitle: this.title,
       todoTitle: '',
       todoDeadline: null,
@@ -39,38 +47,29 @@ export default {
     }
   },
   methods: {
-    async fetchBucketTodo() {
-      try {
-        const res = await getWorkbucketTodos(this.id)
-        // console.log(res)
-        if (res?.success) {
-          this.todos = res?.data
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    },
     async fetchMemberlists(workspaceAccount: string) {
       try {
         const res = await getWorkspaceMembers(workspaceAccount)
         if (res?.success) {
           const data = res?.data
           const { members } = data
-          const memberOpts = members.map((member: any) => ({
+          const memberOpts = members.map((member: MemberType) => ({
             name: member.name,
             userId: member._id,
           }))
-          this.members = memberOpts
+          this.memberOpts = memberOpts
+          folderStore.initializedMembers(members)
         }
       } catch (error) {
         console.log(error)
       }
     },
     handleUpdatedFolder() {
-      this.$emit('updated-folder', this.id, this.folderTitle)
+      if (!this.folderTitle) return
+      folderStore.onUpdatedFolder(this.id, this.folderTitle as string)
     },
     handleDeletedFolder() {
-      this.$emit('deleted-folder', this.id)
+      folderStore.onDeletedFolder(this.id)
     },
     handleCreatedToggle() {
       this.createdToggle = !this.createdToggle
@@ -88,33 +87,36 @@ export default {
         deadline: convertTimeToTimestamp(this.todoDeadline),
         assignments,
       }
-      try {
-        const res = await createdWorkspaceTodo(this.id, body)
-        if (res?.success) {
-          const data = res?.data
-          this.todos = [data, ...this.todos]
-          this.createdToggle = false
-          this.todoTitle = ''
-          this.todoDeadline = null
-          this.todoAssign = []
-        }
-      } catch (error) {
-        console.log(error)
+
+      const results = await folderStore.onCreatedTodo(this.id, body)
+
+      if (results) {
+        this.createdToggle = false
+        this.todoTitle = ''
+        this.todoDeadline = null
+        this.todoAssign = []
+      } else {
+        toast.error('代辦事項建立失敗')
       }
     },
-    handleUpdatedTodo(todoId: string, data: any) {
-      const updated_todos = this.todos.map((todo) => {
-        return todo._id === todoId ? data : todo
-      })
-      this.todos = updated_todos
-    },
-    handleDeletedTodo(todoId: string) {
-      const updated_todos = this.todos.filter((todo) => todo._id !== todoId)
-      this.todos = updated_todos
-    },
+    // handleUpdatedTodo(todoId: string, data: any) {
+    //   const updated_todos = this.todos.map((todo) => {
+    //     return todo._id === todoId ? data : todo
+    //   })
+    //   // this.todos = updated_todos
+    //   this.$emit('updated-todo', this.id, updated_todos)
+    // },
+    // handleDeletedTodo(todoId: string) {
+    //   const updated_todos = this.todos.filter((todo) => todo._id !== todoId)
+    //   // this.todos = updated_todos
+    //   this.$emit('updated-todo', this.id, updated_todos)
+    // },
+    // handleTodoDragEnd(event: any) {
+    //   console.log(event)
+    // },
   },
   mounted() {
-    this.fetchBucketTodo()
+    // this.fetchBucketTodo()
     if (this.workspaceAccount) {
       this.fetchMemberlists(this.workspaceAccount as string)
     }
@@ -177,7 +179,7 @@ export default {
             v-model="todoAssign"
             track-by="userId"
             label="name"
-            :options="members"
+            :options="memberOpts"
             :multiple="true"
             placeholder="請指派人選"
             class="bg-pale-aqua"
@@ -200,9 +202,7 @@ export default {
         :checklists="todo.checklists"
         :assignments="todo.assignments"
         :deadline="todo.deadline"
-        :memberOpts="members"
-        @edit-todo="handleUpdatedTodo"
-        @delete-todo="handleDeletedTodo"
+        :memberOpts="memberOpts"
       />
     </div>
   </div>

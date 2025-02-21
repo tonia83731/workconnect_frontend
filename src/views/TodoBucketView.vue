@@ -1,15 +1,12 @@
 <script lang="ts">
-import { reactive } from 'vue'
-import {
-  createdWorkspaceFolder,
-  deleteWorkspaceFolder,
-  getWorkspaceFolders,
-  // getWorkspaceFoldersWithTodos,
-  updatedWorkspaceFolderTitle,
-} from '@/api/workfolder'
+import { getWorkspaceFoldersWithTodos } from '@/api/workfolder'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
 import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
+import { useFolderStore } from '@/stores/folders'
 import type { WorkfolderType } from '@/types/folders'
+import type { AssignmentType } from '@/types/todos'
+
+const folderStore = useFolderStore()
 
 export default {
   components: {
@@ -17,69 +14,47 @@ export default {
     TodoFolder,
   },
   data() {
-    return {
-      folders: reactive([] as WorkfolderType[]),
-    }
+    return {}
   },
   methods: {
-    async fecthWorkfolders(bucketId: string) {
+    async fetchWorkfoldersWithTodos(bucketId: string) {
       try {
-        const res = await getWorkspaceFolders(bucketId)
+        const res = await getWorkspaceFoldersWithTodos(bucketId)
 
         if (res?.success) {
           const data = res?.data
-          // console.log(data)
-          this.folders = data
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    async handleCreatedFolder() {
-      try {
-        const res = await createdWorkspaceFolder(
-          this.workspaceAccount as string,
-          this.bucketId as string,
-        )
-        if (res?.success) {
-          const data = res?.data
-          this.folders.push(data)
-        }
-      } catch (error) {
-        console.log(error)
-      }
-    },
-    async handleUpdatedFolderTitle(folderId: string, folderTitle: string) {
-      try {
-        const res = await updatedWorkspaceFolderTitle(folderId, {
-          title: folderTitle,
-        })
 
-        if (res?.success) {
-          const updated_folders = this.folders.map((folder) => {
-            return folder._id === folderId ? { ...folder, title: folderTitle } : folder
+          const formated_folders = data.map((folder: WorkfolderType) => {
+            const todos = folder.todos.map((todo) => {
+              const assignments = todo.assignments.map((a: AssignmentType) => ({
+                userId: a.userId._id,
+                name: a.userId.name,
+                bgColor: a.userId.bgColor,
+                textColor: a.userId.textColor,
+              }))
+              return {
+                ...todo,
+                assignments,
+              }
+            })
+            return {
+              ...folder,
+              todos,
+            }
           })
-          this.folders = updated_folders
+          folderStore.initializedFolders(formated_folders)
         }
       } catch (error) {
         console.log(error)
       }
     },
-    async handleDeletedFolder(folderId: string) {
-      try {
-        const res = await deleteWorkspaceFolder(folderId)
-        if (res?.success) {
-          const updated_folders = this.folders.filter((folder) => folder._id !== folderId)
-          this.folders = updated_folders
-        }
-      } catch (error) {
-        console.log(error)
-      }
+    handleCreatedFolder() {
+      folderStore.onCreatedFolder(this.workspaceAccount as string, this.bucketId as string)
     },
   },
   mounted() {
     if (this.bucketId) {
-      this.fecthWorkfolders(this.bucketId as string)
+      this.fetchWorkfoldersWithTodos(this.bucketId as string)
     }
   },
   computed: {
@@ -88,6 +63,9 @@ export default {
     },
     bucketId() {
       return this.$route.params.bucketId
+    },
+    folders() {
+      return folderStore.folders
     },
     gridStyle() {
       return {
@@ -98,7 +76,7 @@ export default {
   watch: {
     bucketId(newBucketId, currBucketId) {
       if (newBucketId && newBucketId !== currBucketId) {
-        this.fecthWorkfolders(newBucketId)
+        this.fetchWorkfoldersWithTodos(newBucketId)
       }
     },
   },
@@ -115,9 +93,10 @@ export default {
             :key="folder._id"
             :id="folder._id"
             :title="folder.title"
-            @updated-folder="handleUpdatedFolderTitle"
-            @deleted-folder="handleDeletedFolder"
+            :todos="folder.todos || []"
           />
+          <!--
+            @updated-todo="handleUpdatedTodo" -->
           <button
             @click="handleCreatedFolder"
             class="px-4 h-10 rounded-md border text-ocean-teal-60 border-ocean-teal-60 border-dashed flex justify-center items-center font-bold hover:border-ocean-teal hover:text-ocean-teal"
@@ -131,4 +110,6 @@ export default {
 </template>
 
 <!-- https://www.npmjs.com/package/vue-draggable-next -->
+
+<!-- https://www.npmjs.com/package/vuedraggable -->
 <!-- https://sortablejs.github.io/vue.draggable.next/#/simple -->

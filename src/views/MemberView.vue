@@ -40,7 +40,12 @@ export default {
           const data = res?.data
           const { invites, members } = data
           this.invites = invites
-          this.members = members
+          this.members = members.map((member: MemberType) => ({
+            _id: member._id,
+            name: member.name,
+            email: member.email,
+            isAdmin: member.isAdmin,
+          }))
         }
       } catch (error) {
         console.log(error)
