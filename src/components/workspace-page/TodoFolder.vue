@@ -8,6 +8,7 @@ import TodoItem from './TodoItem.vue'
 import { useFolderStore } from '@/stores/folders'
 import { toast } from 'vue3-toastify'
 import type { MemberType } from '@/types/members'
+import { VueDraggable } from 'vue-draggable-plus'
 
 const folderStore = useFolderStore()
 
@@ -16,6 +17,7 @@ export default {
     TrashIcon,
     Multiselect,
     TodoItem,
+    VueDraggable,
   },
   props: {
     id: {
@@ -35,7 +37,6 @@ export default {
   data() {
     return {
       memberOpts: [],
-      // members: [],
       folderTitle: this.title,
       todoTitle: '',
       todoDeadline: null,
@@ -44,6 +45,7 @@ export default {
         userId: string
       }[],
       createdToggle: false,
+      todosList: [...this.todos],
     }
   },
   methods: {
@@ -99,24 +101,51 @@ export default {
         toast.error('代辦事項建立失敗')
       }
     },
-    // handleUpdatedTodo(todoId: string, data: any) {
-    //   const updated_todos = this.todos.map((todo) => {
-    //     return todo._id === todoId ? data : todo
-    //   })
-    //   // this.todos = updated_todos
-    //   this.$emit('updated-todo', this.id, updated_todos)
-    // },
-    // handleDeletedTodo(todoId: string) {
-    //   const updated_todos = this.todos.filter((todo) => todo._id !== todoId)
-    //   // this.todos = updated_todos
-    //   this.$emit('updated-todo', this.id, updated_todos)
-    // },
-    // handleTodoDragEnd(event: any) {
+
+    async handleSameFolderDragged(event: any) {
+      // 相同folder移動觸發
+      // console.log('update')
+      const folderId = event.from.id
+      const todoId = event.data._id
+
+      const newIdx = event.newIndex
+      const oldIdx = event.oldIndex
+
+      folderStore.onSameFolderDragged(folderId, todoId, oldIdx, newIdx)
+    },
+    async handleDiffFolderDragged(event: any) {
+      // 不同folder移動觸發
+      // console.log('add')
+      // console.log(event)
+      // console.log(event.data, event.newIndex, event.oldIndex)
+      // console.log(event.data.order, event.data.workfolderId)
+      // console.log(event.from.id, event.to.id)
+
+      const folders = folderStore.folders
+      const newFolder = folders.find((folder) => folder._id === event.to.id)
+      const newTodolength = newFolder ? newFolder.todos.length : 0
+      const oldFolder = folders.find((folder) => folder._id === event.from.id)
+      const oldTodolength = oldFolder ? oldFolder.todos.length : 0
+
+      const actualNewIdx = newTodolength - event.newIndex
+      const actualOldIdx = oldTodolength - 1 - event.oldIndex
+
+      const body = {
+        oldFolderId: event.from.id,
+        newFolderId: event.to.id,
+        newOrder: actualNewIdx,
+        oldOrder: actualOldIdx,
+      }
+
+      folderStore.onDiffFolderDragged(event.to.id, event.from.id, event.data._id, body)
+    },
+    // onRemove(event) {
+    //   console.log('remove')
     //   console.log(event)
     // },
   },
   mounted() {
-    // this.fetchBucketTodo()
+    // console.log(this.todos)
     if (this.workspaceAccount) {
       this.fetchMemberlists(this.workspaceAccount as string)
     }
@@ -127,6 +156,14 @@ export default {
     },
     minDate() {
       return new Date().toISOString().split('T')[0]
+    },
+    // todoList() {
+    //   return [...this.todos]
+    // },
+    todoLength() {
+      const folders = folderStore.folders
+      const folder = folders.find((folder) => folder._id === this.id)
+      return folder ? folder.todos.length : 0
     },
   },
 }
@@ -191,7 +228,7 @@ export default {
         </button>
       </div>
     </div>
-    <div class="flex flex-col gap-2">
+    <!-- <div class="flex flex-col gap-2">
       <TodoItem
         v-for="todo in todos"
         :key="todo._id"
@@ -204,6 +241,44 @@ export default {
         :deadline="todo.deadline"
         :memberOpts="memberOpts"
       />
-    </div>
+    </div> -->
+    <VueDraggable
+      class="flex flex-col gap-2"
+      :animation="50"
+      ghostClass="ghost"
+      group="todo"
+      @update="handleSameFolderDragged"
+      @add="handleDiffFolderDragged"
+      v-model="todosList"
+      :id="id"
+    >
+      <TodoItem
+        v-for="todo in todos"
+        :key="todo._id"
+        :id="todo._id"
+        :folderId="todo.workfolderId"
+        :title="todo.title"
+        :status="todo.status"
+        :checklists="todo.checklists"
+        :assignments="todo.assignments"
+        :deadline="todo.deadline"
+        :memberOpts="memberOpts"
+      />
+    </VueDraggable>
   </div>
 </template>
+
+<!-- <div class="flex flex-col gap-2">
+<TodoItem
+v-for="todo in todos"
+:key="todo._id"
+:id="todo._id"
+:folderId="todo.workfolderId"
+:title="todo.title"
+:status="todo.status"
+:checklists="todo.checklists"
+:assignments="todo.assignments"
+:deadline="todo.deadline"
+:memberOpts="memberOpts"
+/>
+</div> -->

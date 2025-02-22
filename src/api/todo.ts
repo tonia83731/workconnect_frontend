@@ -1,7 +1,4 @@
 import { axiosAuthFetch } from './index'
-import { defaultURL } from './workspace'
-
-const TODO_URL = (workspaceId: string) => defaultURL('todo', workspaceId)
 
 type TodoBasicType = {
   title: string
@@ -72,16 +69,34 @@ export const updatedWorkspaceTodo = async (todoId: string, payload: TodoEditType
   }
 }
 
-export const updatedTodoPosition = async (
-  workspaceId: string,
+export const updatedTodoVerticalPosition = async (
+  folderId: string,
   todoId: string,
   payload: {
-    workfolderId: string
-    updatedOrder: number
+    newOrder: number
+    oldOrder: number
   },
 ) => {
   try {
-    const url = TODO_URL(workspaceId) + `/${todoId}/positions`
+    const url = `/todo/${folderId}/${todoId}/updated-vertical-position`
+    const response = await axiosAuthFetch('PUT', url, payload)
+    return response?.data
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+export const updatedTodoHorizonalPosition = async (
+  todoId: string,
+  payload: {
+    oldFolderId: string
+    newFolderId: string
+    newOrder: number
+    oldOrder: number
+  },
+) => {
+  try {
+    const url = `/todo/${todoId}/updated-horizonal-position`
     const response = await axiosAuthFetch('PUT', url, payload)
     return response?.data
   } catch (error) {

@@ -302,7 +302,6 @@ export default {
                 placeholder="請選擇工作群組"
                 disabled
               ></Multiselect>
-              <!-- :disabled="folderOpts.length <= 1" -->
             </div>
             <div class="flex flex-col gap-1">
               <h5 :class="label_class">截止日期</h5>

@@ -109,7 +109,4 @@ export default {
   </WorkspaceLayout>
 </template>
 
-<!-- https://www.npmjs.com/package/vue-draggable-next -->
-
-<!-- https://www.npmjs.com/package/vuedraggable -->
-<!-- https://sortablejs.github.io/vue.draggable.next/#/simple -->
+<!-- https://vue-draggable-plus.pages.dev/demo/tow-list/ -->

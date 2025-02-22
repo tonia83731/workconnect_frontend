@@ -19,6 +19,7 @@ export type TodoFormatedType = {
   note: string
   checklists: CheckListType[]
   deadline: number | null
+  order?: number
 }
 
 export type CheckListType = {
