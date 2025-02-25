@@ -12,8 +12,8 @@ import * as rules from '@vee-validate/rules'
 import { localize, setLocale } from '@vee-validate/i18n'
 import zhTW from '@vee-validate/i18n/dist/locale/zh_TW.json'
 
-import VueDatePicker from '@vuepic/vue-datepicker'
-import '@vuepic/vue-datepicker/dist/main.css'
+// import VueDatePicker from '@vuepic/vue-datepicker'
+// import '@vuepic/vue-datepicker/dist/main.css'
 
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.min.css'

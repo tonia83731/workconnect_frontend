@@ -8,7 +8,8 @@ import TodoItem from './TodoItem.vue'
 import { useFolderStore } from '@/stores/folders'
 import { toast } from 'vue3-toastify'
 import type { MemberType } from '@/types/members'
-import { VueDraggable } from 'vue-draggable-plus'
+// import { VueDraggable } from 'vue-draggable-plus'
+// import { getWorkfolderTodos } from '@/api/todo'
 
 const folderStore = useFolderStore()
 
@@ -17,7 +18,7 @@ export default {
     TrashIcon,
     Multiselect,
     TodoItem,
-    VueDraggable,
+    // draggable: VueDraggable,
   },
   props: {
     id: {
@@ -36,6 +37,7 @@ export default {
   },
   data() {
     return {
+      // todos: [] as TodoFormatedType[],
       memberOpts: [],
       folderTitle: this.title,
       todoTitle: '',
@@ -45,10 +47,27 @@ export default {
         userId: string
       }[],
       createdToggle: false,
-      todosList: [...this.todos],
+      // ----------------------------------------
+      draggedTodo: null as TodoFormatedType | null,
+      draggedIdx: null as number | null,
+      sourceFolderId: null as string | null,
+      // ----------------------------------------
+      targetFolderId: null as string | null,
+      targetIdx: null as number | null,
     }
   },
   methods: {
+    // async fetchFolderTodos(folderId: string) {
+    //   try {
+    //     const res = await getWorkfolderTodos(folderId)
+
+    //     if (res?.success) {
+    //       this.todos = res?.data
+    //     }
+    //   } catch (error) {
+    //     console.log(error)
+    //   }
+    // },
     async fetchMemberlists(workspaceAccount: string) {
       try {
         const res = await getWorkspaceMembers(workspaceAccount)
@@ -101,51 +120,17 @@ export default {
         toast.error('代辦事項建立失敗')
       }
     },
-
-    async handleSameFolderDragged(event: any) {
-      // 相同folder移動觸發
-      // console.log('update')
-      const folderId = event.from.id
-      const todoId = event.data._id
-
-      const newIdx = event.newIndex
-      const oldIdx = event.oldIndex
-
-      folderStore.onSameFolderDragged(folderId, todoId, oldIdx, newIdx)
+    handleDragStart(folderId: string, todo: TodoFormatedType, idx: number) {
+      folderStore.onDragDataSet(folderId, todo, idx)
     },
-    async handleDiffFolderDragged(event: any) {
-      // 不同folder移動觸發
-      // console.log('add')
-      // console.log(event)
-      // console.log(event.data, event.newIndex, event.oldIndex)
-      // console.log(event.data.order, event.data.workfolderId)
-      // console.log(event.from.id, event.to.id)
+    handleDrop(folderId: string, todo: TodoFormatedType, idx: number) {
+      this.targetFolderId = folderId
+      this.targetIdx = idx
 
-      const folders = folderStore.folders
-      const newFolder = folders.find((folder) => folder._id === event.to.id)
-      const newTodolength = newFolder ? newFolder.todos.length : 0
-      const oldFolder = folders.find((folder) => folder._id === event.from.id)
-      const oldTodolength = oldFolder ? oldFolder.todos.length : 0
-
-      const actualNewIdx = newTodolength - event.newIndex
-      const actualOldIdx = oldTodolength - 1 - event.oldIndex
-
-      const body = {
-        oldFolderId: event.from.id,
-        newFolderId: event.to.id,
-        newOrder: actualNewIdx,
-        oldOrder: actualOldIdx,
-      }
-
-      folderStore.onDiffFolderDragged(event.to.id, event.from.id, event.data._id, body)
+      folderStore.onMovedTodo(folderId, idx)
     },
-    // onRemove(event) {
-    //   console.log('remove')
-    //   console.log(event)
-    // },
   },
   mounted() {
-    // console.log(this.todos)
     if (this.workspaceAccount) {
       this.fetchMemberlists(this.workspaceAccount as string)
     }
@@ -157,14 +142,25 @@ export default {
     minDate() {
       return new Date().toISOString().split('T')[0]
     },
-    // todoList() {
-    //   return [...this.todos]
-    // },
     todoLength() {
       const folders = folderStore.folders
       const folder = folders.find((folder) => folder._id === this.id)
-      return folder ? folder.todos.length : 0
+      return folder?.todos.length
     },
+  },
+  watch: {
+    // todos: {
+    //   handler(newTodos) {
+    //     this.localTodos = [...newTodos]
+    //   },
+    //   deep: true,
+    // },
+    // localTodos: {
+    //   handler(newList) {
+    //     this.$emit('update:todos', newList)
+    //   },
+    //   deep: true,
+    // },
   },
 }
 </script>
@@ -185,6 +181,7 @@ export default {
         <TrashIcon class="w-4 h-4" />
       </button>
     </div>
+    <!-- {{ localTodos }} -->
     <div class="flex flex-col gap-2">
       <button
         @click="handleCreatedToggle"
@@ -228,7 +225,54 @@ export default {
         </button>
       </div>
     </div>
-    <!-- <div class="flex flex-col gap-2">
+    <div class="flex flex-col gap-2">
+      <div
+        v-for="(todo, index) in todos"
+        :key="todo._id"
+        :draggable="true"
+        @dragstart="handleDragStart(id, todo, index)"
+        @dragover.prevent
+        @drop="handleDrop(id, todo, index)"
+      >
+        <TodoItem
+          :id="todo._id"
+          :folderId="todo.workfolderId"
+          :title="todo.title"
+          :status="todo.status"
+          :checklists="todo.checklists"
+          :assignments="todo.assignments"
+          :deadline="todo.deadline"
+          :memberOpts="memberOpts"
+        />
+      </div>
+    </div>
+    <!-- <draggable
+      v-model="localTodos"
+      group="todos"
+      class="flex flex-col gap-2"
+      @update="onUpdated"
+      @add="onAdd"
+      @remove="onRemove"
+      @end="ondragend"
+      item-key="_id"
+    >
+      <TodoItem
+        v-for="todo in localTodos"
+        :key="todo._id"
+        :id="todo._id"
+        :folderId="todo.workfolderId"
+        :title="todo.title"
+        :status="todo.status"
+        :checklists="todo.checklists"
+        :assignments="todo.assignments"
+        :deadline="todo.deadline"
+        :memberOpts="memberOpts"
+      />
+    </draggable> -->
+  </div>
+</template>
+
+<!-- <div class="flex flex-col gap-2">
       <TodoItem
         v-for="todo in todos"
         :key="todo._id"
@@ -242,14 +286,16 @@ export default {
         :memberOpts="memberOpts"
       />
     </div> -->
-    <VueDraggable
+
+<!-- <VueDraggable
+      v-model="localTodos"
+      :group="{ name: 'todos', pull: true, put: true }"
       class="flex flex-col gap-2"
-      :animation="50"
-      ghostClass="ghost"
-      group="todo"
-      @update="handleSameFolderDragged"
-      @add="handleDiffFolderDragged"
-      v-model="todosList"
+      @update="onUpdated(id)"
+      @add="onAdd(id)"
+      @remove="onRemove(id)"
+      @start="onDragStart"
+      @end="onDragEnd"
       :id="id"
     >
       <TodoItem
@@ -264,21 +310,4 @@ export default {
         :deadline="todo.deadline"
         :memberOpts="memberOpts"
       />
-    </VueDraggable>
-  </div>
-</template>
-
-<!-- <div class="flex flex-col gap-2">
-<TodoItem
-v-for="todo in todos"
-:key="todo._id"
-:id="todo._id"
-:folderId="todo.workfolderId"
-:title="todo.title"
-:status="todo.status"
-:checklists="todo.checklists"
-:assignments="todo.assignments"
-:deadline="todo.deadline"
-:memberOpts="memberOpts"
-/>
-</div> -->
+    </VueDraggable> -->

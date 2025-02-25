@@ -5,7 +5,6 @@ import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
 import { useFolderStore } from '@/stores/folders'
 import type { WorkfolderType } from '@/types/folders'
 import type { AssignmentType } from '@/types/todos'
-
 const folderStore = useFolderStore()
 
 export default {
@@ -51,6 +50,7 @@ export default {
     handleCreatedFolder() {
       folderStore.onCreatedFolder(this.workspaceAccount as string, this.bucketId as string)
     },
+    handleTodoMoved() {},
   },
   mounted() {
     if (this.bucketId) {
@@ -87,7 +87,7 @@ export default {
   <WorkspaceLayout mainTitle="代辦列表">
     <template #workspace>
       <div class="w-full h-full overflow-x-auto scroll-horizonal">
-        <div class="grid gap-4 h-full" :style="gridStyle">
+        <div class="grid gap-4 h-full" @dragover.prevent :style="gridStyle">
           <TodoFolder
             v-for="folder in folders"
             :key="folder._id"
@@ -95,8 +95,6 @@ export default {
             :title="folder.title"
             :todos="folder.todos || []"
           />
-          <!--
-            @updated-todo="handleUpdatedTodo" -->
           <button
             @click="handleCreatedFolder"
             class="px-4 h-10 rounded-md border text-ocean-teal-60 border-ocean-teal-60 border-dashed flex justify-center items-center font-bold hover:border-ocean-teal hover:text-ocean-teal"
@@ -108,5 +106,3 @@ export default {
     </template>
   </WorkspaceLayout>
 </template>
-
-<!-- https://vue-draggable-plus.pages.dev/demo/tow-list/ -->

@@ -29,9 +29,9 @@ export type TodoEditType = TodoBasicType & {
   }[]
 }
 
-export const getWorkbucketTodos = async (workbucketId: string) => {
+export const getWorkfolderTodos = async (workfolderId: string) => {
   try {
-    const url = `/todo/${workbucketId}/bucket-todos`
+    const url = `/todo/${workfolderId}/folder-todos`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {
