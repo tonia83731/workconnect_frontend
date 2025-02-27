@@ -55,7 +55,7 @@ app.component('VField', Field)
 app.component('VForm', Form)
 app.component('ErrorMessage', ErrorMessage)
 
-app.component('VueDatePicker', VueDatePicker)
+// app.component('VueDatePicker', VueDatePicker)
 app.component('VMultiSelect', Multiselect)
 
 app.mount('#app')

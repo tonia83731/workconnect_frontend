@@ -1,4 +1,9 @@
-import { createdWorkspaceTodo, deleteWorkspaceTodo, updatedWorkspaceTodo } from '@/api/todo'
+import {
+  createdWorkspaceTodo,
+  deleteWorkspaceTodo,
+  updatedTodoPosition,
+  updatedWorkspaceTodo,
+} from '@/api/todo'
 import {
   createdWorkspaceFolder,
   deleteWorkspaceFolder,
@@ -173,7 +178,7 @@ export const useFolderStore = defineStore('folders', {
           todo.order = index
         })
 
-        targetFolder.todos.todos.forEach((todo: TodoFormatedType, index: number) => {
+        targetFolder.todos.forEach((todo: TodoFormatedType, index: number) => {
           todo.order = index
         })
 
@@ -182,22 +187,34 @@ export const useFolderStore = defineStore('folders', {
           _id: todo._id,
           order: todo.order,
         }))
-        const target_todo_arr = currFolder.todos.map((todo: TodoFormatedType) => ({
+        const target_todo_arr = targetFolder.todos.map((todo: TodoFormatedType) => ({
           _id: todo._id,
           order: todo.order,
         }))
 
         const todo_arr = [...curr_todo_arr, ...target_todo_arr]
 
-        this.folders = this.folders.map((folder) => {
-          if (folder._id === this.sourceFolderId) {
-            return { ...folder, todos: [...currFolder.todos] }
+        try {
+          const res = await updatedTodoPosition(
+            this.sourceFolderId as string,
+            targetFolderId,
+            this.draggedTodo?._id as string,
+            { todos: todo_arr },
+          )
+          if (res?.success) {
+            this.folders = this.folders.map((folder) => {
+              if (folder._id === this.sourceFolderId) {
+                return { ...folder, todos: [...currFolder.todos] }
+              }
+              if (folder._id === targetFolderId) {
+                return { ...folder, todos: [...targetFolder.todos] }
+              }
+              return folder
+            })
           }
-          if (folder._id === targetFolderId) {
-            return { ...folder, todos: [...targetFolder.todos] }
-          }
-          return folder
-        })
+        } catch (error) {
+          console.log(error)
+        }
       } else {
         currFolder.todos.splice(this.draggedIdx, 1)
         currFolder.todos.splice(targetIdx, 0, this.draggedTodo)
@@ -212,12 +229,24 @@ export const useFolderStore = defineStore('folders', {
           order: todo.order,
         }))
 
-        this.folders = this.folders.map((folder) => {
-          if (folder._id === this.sourceFolderId) {
-            return { ...folder, todos: [...currFolder.todos] }
+        try {
+          const res = await updatedTodoPosition(
+            this.sourceFolderId as string,
+            targetFolderId,
+            this.draggedTodo?._id as string,
+            { todos: todo_arr },
+          )
+          if (res?.success) {
+            this.folders = this.folders.map((folder) => {
+              if (folder._id === this.sourceFolderId) {
+                return { ...folder, todos: [...currFolder.todos] }
+              }
+              return folder
+            })
           }
-          return folder
-        })
+        } catch (error) {
+          console.log(error)
+        }
       }
 
       this.sourceFolderId = null

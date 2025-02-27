@@ -69,34 +69,54 @@ export const updatedWorkspaceTodo = async (todoId: string, payload: TodoEditType
   }
 }
 
-export const updatedTodoVerticalPosition = async (
-  folderId: string,
-  todoId: string,
-  payload: {
-    newOrder: number
-    oldOrder: number
-  },
-) => {
-  try {
-    const url = `/todo/${folderId}/${todoId}/updated-vertical-position`
-    const response = await axiosAuthFetch('PUT', url, payload)
-    return response?.data
-  } catch (error) {
-    console.log(error)
-  }
-}
+// export const updatedTodoVerticalPosition = async (
+//   folderId: string,
+//   todoId: string,
+//   payload: {
+//     newOrder: number
+//     oldOrder: number
+//   },
+// ) => {
+//   try {
+//     const url = `/todo/${folderId}/${todoId}/updated-vertical-position`
+//     const response = await axiosAuthFetch('PUT', url, payload)
+//     return response?.data
+//   } catch (error) {
+//     console.log(error)
+//   }
+// }
 
-export const updatedTodoHorizonalPosition = async (
+// export const updatedTodoHorizonalPosition = async (
+//   todoId: string,
+//   payload: {
+//     oldFolderId: string
+//     newFolderId: string
+//     newOrder: number
+//     oldOrder: number
+//   },
+// ) => {
+//   try {
+//     const url = `/todo/${todoId}/updated-horizonal-position`
+//     const response = await axiosAuthFetch('PUT', url, payload)
+//     return response?.data
+//   } catch (error) {
+//     console.log(error)
+//   }
+// }
+
+export const updatedTodoPosition = async (
+  sourceFolderId: string,
+  targetFolderId: string,
   todoId: string,
   payload: {
-    oldFolderId: string
-    newFolderId: string
-    newOrder: number
-    oldOrder: number
+    todos: {
+      _id: string
+      order: number
+    }[]
   },
 ) => {
   try {
-    const url = `/todo/${todoId}/updated-horizonal-position`
+    const url = `/todo/${sourceFolderId}/${targetFolderId}/${todoId}/updated-position`
     const response = await axiosAuthFetch('PUT', url, payload)
     return response?.data
   } catch (error) {
