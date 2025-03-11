@@ -57,10 +57,10 @@ export default {
 
 <template>
   <div
-    class="p-4 rounded-sm shadow-md bg-pale-aqua h-24 flex flex-col justify-between hover:shadow-lg lg:w-1/2"
+    class="p-4 rounded-sm shadow-md bg-pale-aqua h-24 flex flex-col justify-between hover:shadow-lg w-full"
   >
     <RouterLink :to="`/workspace/${account}/todo`" class="flex items-center gap-4">
-      <h5 class="font-bold text-lg">{{ title }}</h5>
+      <h5 class="font-bold text-lg truncate">{{ title }}</h5>
       <p class="text-sm text-midnight-forest-60">|</p>
       <p class="text-sm text-midnight-forest-60">{{ account }}</p>
     </RouterLink>

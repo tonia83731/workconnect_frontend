@@ -178,7 +178,7 @@ export default {
             </button>
           </span>
         </div>
-        <div class="flex flex-col gap-4 lg:flex-row" v-else>
+        <div class="flex flex-col gap-4 md:grid md:grid-cols-2" v-else>
           <WorkspaceCard
             v-for="workspace in workspaces"
             :key="workspace?._id"

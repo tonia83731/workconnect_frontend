@@ -99,7 +99,7 @@ export default {
           </div>
           <p class="text-ocean-teal-60">{{ account }}</p>
         </div>
-        <div class="grid grid-cols-2 grid-rows-2 gap-4">
+        <div class="grid grid-cols-2 grid-rows-2 md:grid-rows-1 md:grid-cols-4 gap-4">
           <div class="bg-white rounded-md text-midnight-forest">
             <p class="text-sm bg-midnight-forest text-white rounded-t-md py-2 px-4 font-medium">
               BUCKET數量

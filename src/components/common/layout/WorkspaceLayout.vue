@@ -91,7 +91,7 @@ export default {
         icon_active: 'ClipBoardSolidIcon',
         // todobuckets: [],
       },
-      todoToggle: false,
+      todoToggle: true,
       // userId: authStore.userId,
     }
   },
@@ -294,11 +294,10 @@ export default {
         <div class="w-full">
           <button
             @click="handleTodoToggle"
-            :disabled="todobuckets.length === 0"
             class="w-full px-4 py-2 flex justify-between items-center"
             :class="{
-              'bg-midnight-forest text-white': activeLink.includes(todolink.href),
-              'bg-white text-midnight-forest': !activeLink.includes(todolink.href),
+              'bg-midnight-forest text-white': activeLink.includes(todolink.href) || todoToggle,
+              'bg-white text-midnight-forest': !activeLink.includes(todolink.href) && !todoToggle,
             }"
           >
             <div class="flex gap-2 items-center">
@@ -315,6 +314,9 @@ export default {
             />
           </button>
           <ul v-if="todoToggle">
+            <li class="pl-12 pr-4 py-2 flex items-center gap-1.5 text-midnight-forest-40 text-sm">
+              目前沒有Bucket
+            </li>
             <li
               class="pl-12 pr-4 py-2 flex items-center gap-1.5 hover:bg-midnight-forest-40"
               v-for="bucket in todobuckets"
@@ -331,6 +333,7 @@ export default {
                 bucket.title
               }}</RouterLink>
             </li>
+
             <li
               class="pl-12 pr-4 py-2 flex items-center gap-1.5 text-ocean-teal hover:bg-midnight-forest-40"
             >
