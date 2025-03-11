@@ -314,10 +314,14 @@ export default {
             />
           </button>
           <ul v-if="todoToggle">
-            <li class="pl-12 pr-4 py-2 flex items-center gap-1.5 text-midnight-forest-40 text-sm">
+            <li
+              v-if="todobuckets.length <= 0"
+              class="pl-12 pr-4 py-2 flex items-center gap-1.5 text-midnight-forest-40 text-sm"
+            >
               目前沒有Bucket
             </li>
             <li
+              v-else
               class="pl-12 pr-4 py-2 flex items-center gap-1.5 hover:bg-midnight-forest-40"
               v-for="bucket in todobuckets"
               :key="bucket._id"
