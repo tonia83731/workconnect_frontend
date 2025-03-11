@@ -13,9 +13,9 @@ export const getWorkspaceBuckets = async (workspaceAccount: string) => {
   }
 }
 
-export const getWorkspaceBucket = async (workspaceId: string, bucketId: string) => {
+export const getWorkspaceBucket = async (bucketId: string) => {
   try {
-    const url = WORKBUCKET_URL(workspaceId) + `/${bucketId}/bucket-title`
+    const url = `/workbucket/${bucketId}/bucket-title`
     const response = await axiosAuthFetch('GET', url)
     return response?.data
   } catch (error) {

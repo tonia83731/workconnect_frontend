@@ -1,4 +1,5 @@
 <script lang="ts">
+import { getWorkspaceBucket } from '@/api/workbucket'
 import { getWorkspaceFoldersWithTodos } from '@/api/workfolder'
 import WorkspaceLayout from '@/components/common/layout/WorkspaceLayout.vue'
 import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
@@ -13,9 +14,22 @@ export default {
     TodoFolder,
   },
   data() {
-    return {}
+    return {
+      bucketName: '',
+    }
   },
   methods: {
+    async fetchBucketTitle(bucketId: string) {
+      try {
+        const res = await getWorkspaceBucket(bucketId)
+
+        if (res?.success) {
+          this.bucketName = res?.data
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
     async fetchWorkfoldersWithTodos(bucketId: string) {
       try {
         const res = await getWorkspaceFoldersWithTodos(bucketId)
@@ -55,6 +69,7 @@ export default {
   mounted() {
     if (this.bucketId) {
       this.fetchWorkfoldersWithTodos(this.bucketId as string)
+      this.fetchBucketTitle(this.bucketId as string)
     }
   },
   computed: {
@@ -77,6 +92,7 @@ export default {
     bucketId(newBucketId, currBucketId) {
       if (newBucketId && newBucketId !== currBucketId) {
         this.fetchWorkfoldersWithTodos(newBucketId)
+        this.fetchBucketTitle(newBucketId)
       }
     },
   },
@@ -84,7 +100,7 @@ export default {
 </script>
 
 <template>
-  <WorkspaceLayout mainTitle="代辦列表">
+  <WorkspaceLayout :mainTitle="`代辦列表: ${bucketName}`">
     <template #workspace>
       <div class="w-full h-full overflow-x-auto scroll-horizonal">
         <div class="grid gap-4 h-full" @dragover.prevent :style="gridStyle">
