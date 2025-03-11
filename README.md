@@ -63,7 +63,7 @@
 
 ## 後續發展
 
-- 目前DATA設計: Workspace > Workbucket > Workfolder > Todo
+- 目前DATA設計: `Workspace > Workbucket > Workfolder > Todo`
   Workfolder內的Todo可以更換Workfolder，後續需擴大考慮Workfolder(連同內部的Todo)是否可以更換Workbucket
 - 考慮是否要加入1v1的Chat Room (無需進入Workspace也可以聊天)
 - Chat Room是否可以建立最新消息通知，包含溝通內容、創建內容、新加入的成員等
@@ -71,7 +71,7 @@
 ## 專案設定
 
 ```sh
-git clone [https://github.com/tonia83731/workconnect_frontend.git](https://github.com/tonia83731/workconnect_frontend.git)
+git clone https://github.com/tonia83731/workconnect_frontend.git
 ```
 
 ```sh
