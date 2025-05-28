@@ -25,7 +25,6 @@ export default {
     CheckSolidCircleIcon,
     ModalLayout,
     Multiselect,
-    // TodoItemModal,
   },
   props: {
     id: {
