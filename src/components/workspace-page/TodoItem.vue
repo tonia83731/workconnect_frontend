@@ -9,11 +9,15 @@ import CalendarIcon from '../icons/CalendarIcon.vue'
 import TrashIcon from '../icons/TrashIcon.vue'
 import CheckCircleIcon from '../icons/CheckCircleIcon.vue'
 import CheckSolidCircleIcon from '../icons/CheckSolidCircleIcon.vue'
+import SpinningCircleIcon from '../icons/SpinningCircle.vue'
+import XmarkIcon from '../icons/XmarkIcon.vue'
+import CheckIcon from '../icons/CheckIcon.vue'
 import { getWorkspaceTodo } from '@/api/todo'
 import { getWorkspaceFolders } from '@/api/workfolder'
 import { convertTimeToTimestamp } from '@/helpers/formatedTime'
 import { useFolderStore } from '@/stores/folders'
 import { toast } from 'vue3-toastify'
+import debounce from 'lodash/debounce'
 
 const folderStore = useFolderStore()
 
@@ -23,6 +27,9 @@ export default {
     TrashIcon,
     CheckCircleIcon,
     CheckSolidCircleIcon,
+    SpinningCircleIcon,
+    XmarkIcon,
+    CheckIcon,
     ModalLayout,
     Multiselect,
   },
@@ -43,9 +50,11 @@ export default {
     },
     checklists: {
       type: Array as () => CheckListType[],
+      default: () => []
     },
     assignments: {
       type: Array as () => AssignmentFormatedType[],
+      default: () => []
     },
     deadline: {
       type: [Number, null],
@@ -88,10 +97,20 @@ export default {
       checklistText: '',
       todoDeadline: null as string | null,
       todoToggle: false,
+      isSaving: false,
+      saveSuccess: null as boolean | null,
+      initialValues: {
+        title: '',
+        note: '',
+        deadline: null as string | null,
+        assignments: [] as { name: string; userId: string }[],
+        checklists: [] as { _id: string; isChecked: boolean; text: string }[],
+        status: null as string | null
+      }
     }
   },
   methods: {
-    async fecthWorkfolders(bucketId: string) {
+    async fetchWorkfolders(bucketId: string) {
       try {
         const res = await getWorkspaceFolders(bucketId)
         if (res?.success) {
@@ -120,7 +139,6 @@ export default {
           const formated_deadline = deadline ? dayjs(deadline).format('YYYY-MM-DD') : null
 
           const folder = this.folderOpts.find((item) => item?.id === workfolderId)
-          // console.log(folder)
 
           this.todoTitle = title
           this.todoStatus = status
@@ -128,8 +146,16 @@ export default {
           this.todoAssignments = formated_assignments
           this.todoChecklists = checklists
           this.todoDeadline = formated_deadline
-
           this.todoWorkfolder = folder || null
+
+          this.initialValues = {
+            title,
+            note,
+            deadline: formated_deadline,
+            assignments: [...formated_assignments],
+            checklists: [...checklists],
+            status
+          }
 
           this.todoToggle = true
         }
@@ -149,8 +175,21 @@ export default {
     handleClosedTodoToggle() {
       this.initializedTodo()
       this.todoToggle = false
+      this.isSaving = false
     },
-    handleEditTodo() {
+    hasChanges(): boolean {
+      return (
+        this.todoTitle !== this.initialValues.title ||
+        this.todoNote !== this.initialValues.note ||
+        this.todoDeadline !== this.initialValues.deadline ||
+        this.todoStatus !== this.initialValues.status ||
+        JSON.stringify(this.todoAssignments) !== JSON.stringify(this.initialValues.assignments) ||
+        JSON.stringify(this.todoChecklists) !== JSON.stringify(this.initialValues.checklists)
+      )
+    },
+    async handleEditTodo() {
+      this.isSaving = true
+      this.saveSuccess = null
       const body = {
         // workfolderId: this.todoWorkfolder?.id,
         title: this.todoTitle,
@@ -163,8 +202,18 @@ export default {
         })),
         assignments: this.todoAssignments.map((assign) => ({ userId: assign.userId })),
       }
-      folderStore.onEditTodo(this.folderId, this.id as string, body)
+      const status = await folderStore.onEditTodo(this.folderId, this.id as string, body)
+      if (status) {
+        this.saveSuccess = true
+      } else {
+        this.saveSuccess = false
+      }
     },
+    debouncedAutoSave: debounce(function (this: any) {
+      if (this.hasChanges()) {
+        this.handleEditTodo()
+      }
+    }, 3000),
     async handleDeleteTodo(e: any, todoId: string) {
       e.stopPropagation()
       const result = await folderStore.onDeletedTodo(this.folderId, todoId as string)
@@ -203,7 +252,7 @@ export default {
   },
   mounted() {
     if (this.bucketId) {
-      this.fecthWorkfolders(this.bucketId as string)
+      this.fetchWorkfolders(this.bucketId as string)
     }
   },
   computed: {
@@ -225,6 +274,44 @@ export default {
       return this.$route.params.bucketId
     },
   },
+  watch: {
+    todoTitle() {
+      if (this.hasChanges()) {
+        this.debouncedAutoSave()
+      }
+    },
+    todoStatus() {
+      if (this.hasChanges()) {
+        this.debouncedAutoSave()
+      }
+    },
+    todoNote() {
+      if (this.hasChanges()) {
+        this.debouncedAutoSave()
+      }
+    },
+    todoDeadline() {
+      if (this.hasChanges()) {
+        this.debouncedAutoSave()
+      }
+    },
+    todoAssignments: {
+      handler() {
+        if (this.hasChanges()) {
+          this.debouncedAutoSave()
+        }
+      },
+      deep: true
+    },
+    todoChecklists: {
+      handler() {
+        if (this.hasChanges()) {
+          this.debouncedAutoSave()
+        }
+      },
+      deep: true
+    }
+  }
 }
 </script>
 
@@ -268,6 +355,16 @@ export default {
   <ModalLayout title="代辦事項" :toggle="todoToggle" modalSize="w-[90%] max-w-[840px] h-full max-h-[560px]" contentSize="h-full max-h-[500px] p-6"  @update:toggle="handleClosedTodoToggle">
     <template #modal>
       <div class="flex flex-col gap-8">
+        <div v-if="isSaving" :class="['text-sm flex items-center justify-end gap-1',
+          saveSuccess === null ? 'text-muted-gray' : saveSuccess === true ? 'text-green-400' : 'text-red-500'
+        ]">
+
+          <SpinningCircleIcon class="w-4 h-4" v-if="saveSuccess === null"/>
+          <CheckIcon class="w-4 h-4" v-if="saveSuccess === true"/>
+          <XmarkIcon class="w-4 h-4" v-if="saveSuccess === false"/>
+          <p>save</p>
+        </div>
+        <!-- Todo Title -->
         <div class="flex justify-between items-center gap-2">
           <input
             type="text"
@@ -280,6 +377,7 @@ export default {
           </button>
         </div>
         <div class="flex flex-col gap-4">
+          <!-- Todo Assignment -->
           <div class="flex flex-col gap-1">
             <h5 :class="label_class">指派人選</h5>
             <Multiselect
@@ -292,6 +390,7 @@ export default {
             ></Multiselect>
           </div>
           <div class="grid grid-cols-2 grid-rows-2 xl:grid-cols-3 xl:grid-rows-1 gap-4">
+            <!-- Todo Groups (disabled) -->
             <div class="flex flex-col gap-1 col-span-2 xl:col-span-1">
               <h5 :class="label_class">工作群組</h5>
               <Multiselect
@@ -304,6 +403,7 @@ export default {
                 disabled
               ></Multiselect>
             </div>
+            <!-- Todo Deadline -->
             <div class="flex flex-col gap-1">
               <h5 :class="label_class">截止日期</h5>
               <input
@@ -313,6 +413,7 @@ export default {
                 class="w-full h-10 bg-transparend border border-[#e8e8e8] rounded-[5px] px-2 focus:border-b focus:border-midnight-forest"
               />
             </div>
+            <!-- Todo Process -->
             <div class="flex flex-col gap-1">
               <h5 :class="label_class">工作進度</h5>
               <Multiselect
@@ -324,6 +425,7 @@ export default {
             </div>
           </div>
         </div>
+        <!-- Todo Note -->
         <div class="flex flex-col gap-1">
           <h5 :class="label_class">工作筆記</h5>
           <textarea
@@ -333,7 +435,7 @@ export default {
             rows="4"
           ></textarea>
         </div>
-        <!-- todo checklists -->
+        <!-- Todo Checklists -->
         <div class="flex flex-col gap-1">
           <h5 :class="label_class">TODO</h5>
           <div class="flex flex-col gap-1 text-sm text-muted-gray">
@@ -395,12 +497,12 @@ export default {
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4">
+        <!-- <div class="grid grid-cols-2 gap-4">
           <button @click="handleClosedTodoToggle" class="w-full h-8 bg-muted-gray text-white">
             取消
           </button>
           <button @click="handleEditTodo" class="w-full h-8 bg-ocean-teal text-white">儲存</button>
-        </div>
+        </div> -->
       </div>
     </template>
   </ModalLayout>

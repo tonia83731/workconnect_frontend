@@ -119,7 +119,7 @@ export const useFolderStore = defineStore('folders', {
         return false
       }
     },
-    async onEditTodo(folderId: string, todoId: string, payload: any) {
+    async onEditTodo(folderId: string, todoId: string, payload: any): Promise<boolean> {
       try {
         const res = await updatedWorkspaceTodo(todoId as string, payload)
         if (res?.success) {
@@ -140,16 +140,25 @@ export const useFolderStore = defineStore('folders', {
 
           this.folders = this.folders.map((folder) => {
             if (folder._id === folderId) {
-              const updated_todos = folder.todos.map((todo: TodoFormatedType) => {
-                return todo._id === todoId ? todo : todo
+              const updated_todos = folder.todos.map((existingTodo: TodoFormatedType) => {
+                if (existingTodo._id === todoId) {
+                  return {
+                    ...existingTodo,
+                    ...todo,
+                    assignments: updatedAssignments
+                  }
+                }
+                return existingTodo
               })
               folder.todos = updated_todos
             }
             return folder
           })
-        }
+          return true
+        } else return false
       } catch (error) {
         console.log(error)
+        return false
       }
     },
     onDragDataSet(folderId: string, todo: TodoFormatedType, idx: number) {
