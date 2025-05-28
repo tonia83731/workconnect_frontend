@@ -354,155 +354,149 @@ export default {
   <!-- <TodoItemModal /> -->
   <ModalLayout title="代辦事項" :toggle="todoToggle" modalSize="w-[90%] max-w-[840px] h-full max-h-[560px]" contentSize="h-full max-h-[500px] p-6"  @update:toggle="handleClosedTodoToggle">
     <template #modal>
-      <div class="flex flex-col gap-8">
-        <div v-if="isSaving" :class="['text-sm flex items-center justify-end gap-1',
-          saveSuccess === null ? 'text-muted-gray' : saveSuccess === true ? 'text-green-400' : 'text-red-500'
+      <div class="flex flex-col gap-8 relative">
+        <div v-if="isSaving" :class="['text-sm flex items-center justify-end gap-1 fixed top-[1.25rem] -translate-y-1/2 left-[90px] z-10 shadow-sm px-2 py-0.5 rounded-full font-bold',
+          saveSuccess === null ? 'bg-muted-gray text-midnight-forest' : saveSuccess === true ? 'bg-green-400 text-white' : 'bg-red-500 text-white'
         ]">
-
           <SpinningCircleIcon class="w-4 h-4" v-if="saveSuccess === null"/>
           <CheckIcon class="w-4 h-4" v-if="saveSuccess === true"/>
           <XmarkIcon class="w-4 h-4" v-if="saveSuccess === false"/>
           <p>save</p>
         </div>
-        <!-- Todo Title -->
-        <div class="flex justify-between items-center gap-2">
-          <input
-            type="text"
-            v-model="todoTitle"
-            class="w-full h-10 bg-pale-aqua px-2 focus:border-b focus:border-midnight-forest"
-            placeholder="輸入代辦事項"
-          />
-          <button @click="(e) => handleDeleteTodo(e, id as string)">
-            <TrashIcon class="w-5 h-5 text-midnight-forest-40 hover:text-midnight-forest" />
-          </button>
-        </div>
-        <div class="flex flex-col gap-4">
-          <!-- Todo Assignment -->
-          <div class="flex flex-col gap-1">
-            <h5 :class="label_class">指派人選</h5>
-            <Multiselect
-              v-model="todoAssignments"
-              :options="memberOpts"
-              :multiple="true"
-              label="name"
-              track-by="userId"
-              placeholder="請選擇指派人選"
-            ></Multiselect>
+        <div class="flex flex-col gap-8 relative">
+          <!-- Todo Title -->
+          <div class="flex justify-between items-center gap-2">
+            <input
+              type="text"
+              v-model="todoTitle"
+              class="w-full h-10 bg-pale-aqua px-2 focus:border-b focus:border-midnight-forest"
+              placeholder="輸入代辦事項"
+            />
+            <button @click="(e) => handleDeleteTodo(e, id as string)">
+              <TrashIcon class="w-5 h-5 text-midnight-forest-40 hover:text-midnight-forest" />
+            </button>
           </div>
-          <div class="grid grid-cols-2 grid-rows-2 xl:grid-cols-3 xl:grid-rows-1 gap-4">
-            <!-- Todo Groups (disabled) -->
-            <div class="flex flex-col gap-1 col-span-2 xl:col-span-1">
-              <h5 :class="label_class">工作群組</h5>
+          <div class="flex flex-col gap-4">
+            <!-- Todo Assignment -->
+            <div class="flex flex-col gap-1">
+              <h5 :class="label_class">指派人選</h5>
               <Multiselect
-                v-model="todoWorkfolder"
-                :options="folderOpts"
-                :multiple="false"
-                label="title"
-                track-by="id"
-                placeholder="請選擇工作群組"
-                disabled
+                v-model="todoAssignments"
+                :options="memberOpts"
+                :multiple="true"
+                label="name"
+                track-by="userId"
+                placeholder="請選擇指派人選"
               ></Multiselect>
             </div>
-            <!-- Todo Deadline -->
-            <div class="flex flex-col gap-1">
-              <h5 :class="label_class">截止日期</h5>
-              <input
-                type="date"
-                :min="minDate"
-                v-model="todoDeadline"
-                class="w-full h-10 bg-transparend border border-[#e8e8e8] rounded-[5px] px-2 focus:border-b focus:border-midnight-forest"
-              />
-            </div>
-            <!-- Todo Process -->
-            <div class="flex flex-col gap-1">
-              <h5 :class="label_class">工作進度</h5>
-              <Multiselect
-                v-model="todoStatus"
-                :options="statusOpts"
-                :searchable="false"
-                placeholder="請選擇工作進度"
-              ></Multiselect>
-            </div>
-          </div>
-        </div>
-        <!-- Todo Note -->
-        <div class="flex flex-col gap-1">
-          <h5 :class="label_class">工作筆記</h5>
-          <textarea
-            v-model="todoNote"
-            class="py-2 text-sm"
-            :class="textarea_class"
-            rows="4"
-          ></textarea>
-        </div>
-        <!-- Todo Checklists -->
-        <div class="flex flex-col gap-1">
-          <h5 :class="label_class">TODO</h5>
-          <div class="flex flex-col gap-1 text-sm text-muted-gray">
-            <div
-              class="flex items-center gap-2"
-              v-for="checklist in todoChecklists"
-              :key="checklist?._id"
-            >
-              <label :for="checklist?._id" class="w-full flex items-center gap-2">
+            <div class="grid grid-cols-2 grid-rows-2 xl:grid-cols-3 xl:grid-rows-1 gap-4">
+              <!-- Todo Groups (disabled) -->
+              <div class="flex flex-col gap-1 col-span-2 xl:col-span-1">
+                <h5 :class="label_class">工作群組</h5>
+                <Multiselect
+                  v-model="todoWorkfolder"
+                  :options="folderOpts"
+                  :multiple="false"
+                  label="title"
+                  track-by="id"
+                  placeholder="請選擇工作群組"
+                  disabled
+                ></Multiselect>
+              </div>
+              <!-- Todo Deadline -->
+              <div class="flex flex-col gap-1">
+                <h5 :class="label_class">截止日期</h5>
                 <input
-                  :id="checklist?._id"
-                  type="checkbox"
-                  class="hidden"
-                  :checked="checklist?.isChecked"
-                  @change="(e) => handleUpdateChecked(e, checklist?._id)"
+                  type="date"
+                  :min="minDate"
+                  v-model="todoDeadline"
+                  class="w-full h-10 bg-transparend border border-[#e8e8e8] rounded-[5px] px-2 focus:border-b focus:border-midnight-forest"
                 />
-                <span class="">
-                  <CheckSolidCircleIcon v-if="checklist?.isChecked" class="w-5 h-5" />
-                  <CheckCircleIcon v-else class="w-5 h-5" />
-                </span>
+              </div>
+              <!-- Todo Process -->
+              <div class="flex flex-col gap-1">
+                <h5 :class="label_class">工作進度</h5>
+                <Multiselect
+                  v-model="todoStatus"
+                  :options="statusOpts"
+                  :searchable="false"
+                  placeholder="請選擇工作進度"
+                ></Multiselect>
+              </div>
+            </div>
+          </div>
+          <!-- Todo Note -->
+          <div class="flex flex-col gap-1">
+            <h5 :class="label_class">工作筆記</h5>
+            <textarea
+              v-model="todoNote"
+              class="py-2 text-sm"
+              :class="textarea_class"
+              rows="4"
+            ></textarea>
+          </div>
+          <!-- Todo Checklists -->
+          <div class="flex flex-col gap-1">
+            <h5 :class="label_class">TODO</h5>
+            <div class="flex flex-col gap-1 text-sm text-muted-gray">
+              <div
+                class="flex items-center gap-2"
+                v-for="checklist in todoChecklists"
+                :key="checklist?._id"
+              >
+                <label :for="checklist?._id" class="w-full flex items-center gap-2">
+                  <input
+                    :id="checklist?._id"
+                    type="checkbox"
+                    class="hidden"
+                    :checked="checklist?.isChecked"
+                    @change="(e) => handleUpdateChecked(e, checklist?._id)"
+                  />
+                  <span class="">
+                    <CheckSolidCircleIcon v-if="checklist?.isChecked" class="w-5 h-5" />
+                    <CheckCircleIcon v-else class="w-5 h-5" />
+                  </span>
+                  <input
+                    :value="checklist.text"
+                    placeholder="請輸入TODO項目"
+                    class="w-full focus:text-midnight-forest bg-transparent focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"
+                    :class="checklist?.isChecked && 'line-through'"
+                    :disabled="checklist?.isChecked"
+                    @change="(e) => handleUpdateText(e, checklist?._id)"
+                    @keydown.enter="(e: KeyboardEvent) => {
+                      e.preventDefault()
+                      handleUpdateText(e, checklist?._id)
+                      const target = e.target as HTMLInputElement
+                      if (target) target.blur()
+                    }"
+                  />
+                </label>
+                <button
+                  @click="() => handleDeleteTodoChecklist(checklist._id)"
+                  class="opacity-0 hover:opacity-100"
+                >
+                  <TrashIcon class="w-4 h-4 text-muted-gray" />
+                </button>
+              </div>
+              <div class="flex items-center gap-2 h-8">
+                <span class="w-5"><CheckCircleIcon class="w-5 h-5" /></span>
                 <input
-                  :value="checklist.text"
-                  placeholder="請輸入TODO項目"
-                  class="w-full focus:text-midnight-forest bg-transparent focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"
-                  :class="checklist?.isChecked && 'line-through'"
-                  :disabled="checklist?.isChecked"
-                  @change="(e) => handleUpdateText(e, checklist?._id)"
+                  v-model="checklistText"
+                  @blur="handleAddTodoChecklist"
                   @keydown.enter="(e: KeyboardEvent) => {
                     e.preventDefault()
-                    handleUpdateText(e, checklist?._id)
+                    handleAddTodoChecklist()
                     const target = e.target as HTMLInputElement
                     if (target) target.blur()
                   }"
+                  type="text"
+                  placeholder="請輸入TODO項目"
+                  class="w-full h-full focus:px-2 focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"
                 />
-              </label>
-              <button
-                @click="() => handleDeleteTodoChecklist(checklist._id)"
-                class="opacity-0 hover:opacity-100"
-              >
-                <TrashIcon class="w-4 h-4 text-muted-gray" />
-              </button>
-            </div>
-            <div class="flex items-center gap-2 h-8">
-              <span class="w-5"><CheckCircleIcon class="w-5 h-5" /></span>
-              <input
-                v-model="checklistText"
-                @blur="handleAddTodoChecklist"
-                @keydown.enter="(e: KeyboardEvent) => {
-                  e.preventDefault()
-                  handleAddTodoChecklist()
-                  const target = e.target as HTMLInputElement
-                  if (target) target.blur()
-                }"
-                type="text"
-                placeholder="請輸入TODO項目"
-                class="w-full h-full focus:px-2 focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"
-              />
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- <div class="grid grid-cols-2 gap-4">
-          <button @click="handleClosedTodoToggle" class="w-full h-8 bg-muted-gray text-white">
-            取消
-          </button>
-          <button @click="handleEditTodo" class="w-full h-8 bg-ocean-teal text-white">儲存</button>
-        </div> -->
       </div>
     </template>
   </ModalLayout>
