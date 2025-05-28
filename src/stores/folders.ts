@@ -1,6 +1,7 @@
 import {
   createdWorkspaceTodo,
   deleteWorkspaceTodo,
+  updatedFolderTodoPosition,
   updatedTodoPosition,
   updatedWorkspaceTodo,
 } from '@/api/todo'
@@ -156,102 +157,62 @@ export const useFolderStore = defineStore('folders', {
       this.draggedTodo = todo
       this.draggedIdx = idx
     },
-    async onMovedTodo(targetFolderId: string, targetIdx: number) {
-      const currFolder = this.folders.find((f) => f._id === this.sourceFolderId)
-      const targetFolder = this.folders.find((f) => f._id === targetFolderId)
 
-      if (!currFolder || !targetFolder) return
-      console.log('trigger')
+    async onTodoPositionUpdate(folderId: string, todos: string[]) {
+      try {
+        const res = await updatedTodoPosition(folderId, { todos })
+        if (res?.success) {
+          console.log('drag drop success (same folder)')
+          // Update the local state to reflect the new order
+          const folder = this.folders.find(f => f._id === folderId)
+          if (folder) {
+            // Reorder todos based on the new order
+            const reorderedTodos = todos.map(id =>
+              folder.todos.find((todo: TodoFormatedType) => todo._id === id)
+            ).filter(Boolean) as TodoFormatedType[]
 
-      const isSameFolder = this.sourceFolderId === targetFolderId
-
-      if (!isSameFolder) {
-        this.draggedTodo = this.draggedTodo && {
-          ...this.draggedTodo,
-          workfolderId: targetFolderId,
-        }
-
-        currFolder.todos.splice(this.draggedIdx, 1)
-        targetFolder.todos.splice(targetIdx, 0, this.draggedTodo)
-
-        currFolder.todos.forEach((todo: TodoFormatedType, index: number) => {
-          todo.order = index
-        })
-
-        targetFolder.todos.forEach((todo: TodoFormatedType, index: number) => {
-          todo.order = index
-        })
-
-        // passed data to backend: folderId, [todoId, order]
-        const curr_todo_arr = currFolder.todos.map((todo: TodoFormatedType) => ({
-          _id: todo._id,
-          order: todo.order,
-        }))
-        const target_todo_arr = targetFolder.todos.map((todo: TodoFormatedType) => ({
-          _id: todo._id,
-          order: todo.order,
-        }))
-
-        const todo_arr = [...curr_todo_arr, ...target_todo_arr]
-
-        try {
-          const res = await updatedTodoPosition(
-            this.sourceFolderId as string,
-            targetFolderId,
-            this.draggedTodo?._id as string,
-            { todos: todo_arr },
-          )
-          if (res?.success) {
-            this.folders = this.folders.map((folder) => {
-              if (folder._id === this.sourceFolderId) {
-                return { ...folder, todos: [...currFolder.todos] }
+            // Update the folder with reordered todos
+            this.folders = this.folders.map(f => {
+              if (f._id === folderId) {
+                return {
+                  ...f,
+                  todos: reorderedTodos
+                }
               }
-              if (folder._id === targetFolderId) {
-                return { ...folder, todos: [...targetFolder.todos] }
-              }
-              return folder
+              return f
             })
           }
-        } catch (error) {
-          console.log(error)
         }
-      } else {
-        currFolder.todos.splice(this.draggedIdx, 1)
-        currFolder.todos.splice(targetIdx, 0, this.draggedTodo)
-
-        currFolder.todos.forEach((todo: TodoFormatedType, index: number) => {
-          todo.order = index
-        })
-
-        // passed data to backend: folderId, [todoId, order]
-        const todo_arr = currFolder.todos.map((todo: TodoFormatedType) => ({
-          _id: todo._id,
-          order: todo.order,
-        }))
-
-        try {
-          const res = await updatedTodoPosition(
-            this.sourceFolderId as string,
-            targetFolderId,
-            this.draggedTodo?._id as string,
-            { todos: todo_arr },
-          )
-          if (res?.success) {
-            this.folders = this.folders.map((folder) => {
-              if (folder._id === this.sourceFolderId) {
-                return { ...folder, todos: [...currFolder.todos] }
-              }
-              return folder
-            })
-          }
-        } catch (error) {
-          console.log(error)
-        }
+      } catch (error) {
+        console.log(error)
       }
-
-      this.sourceFolderId = null
-      this.draggedTodo = null
-      this.draggedIdx = null
     },
+    async onTodoFolderUpdate(sourceFolderId: string, targetFolderId: string, todoId: string, newIndex: number) {
+      try {
+        const res = await updatedFolderTodoPosition(todoId, {
+          fromFolderId: sourceFolderId,
+          toFolderId: targetFolderId,
+          newIdx: newIndex
+        })
+
+        console.log(res)
+
+        if (res?.success) {
+          console.log('drag drop success (different folder)')
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    onRemoveTodo(folderId: string, oldIndex: number) {
+      // This is just a helper method to handle the UI update when a todo is removed
+      const folder = this.folders.find((f) => f._id === folderId)
+      if (!folder) return
+
+      folder.todos.splice(oldIndex, 1)
+      folder.todos.forEach((todo: TodoFormatedType, index: number) => {
+        todo.order = index
+      })
+    }
   },
 })

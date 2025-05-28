@@ -6,6 +6,8 @@ import TodoFolder from '@/components/workspace-page/TodoFolder.vue'
 import { useFolderStore } from '@/stores/folders'
 import type { WorkfolderType } from '@/types/folders'
 import type { AssignmentType } from '@/types/todos'
+// import draggable from 'vuedraggable'
+
 const folderStore = useFolderStore()
 
 export default {
@@ -19,10 +21,10 @@ export default {
     }
   },
   methods: {
+    // 取得當前Bucket名稱
     async fetchBucketTitle(bucketId: string) {
       try {
         const res = await getWorkspaceBucket(bucketId)
-
         if (res?.success) {
           this.bucketName = res?.data
         }
@@ -30,6 +32,7 @@ export default {
         console.log(error)
       }
     },
+    // 取得當前Bucket的Folders資料
     async fetchWorkfoldersWithTodos(bucketId: string) {
       try {
         const res = await getWorkspaceFoldersWithTodos(bucketId)
@@ -61,15 +64,17 @@ export default {
         console.log(error)
       }
     },
+
+    // --------------------------------------------------------------------------------
+    // 新增Folder
     handleCreatedFolder() {
       folderStore.onCreatedFolder(this.workspaceAccount as string, this.bucketId as string)
     },
-    handleTodoMoved() {},
   },
   mounted() {
     if (this.bucketId) {
-      this.fetchWorkfoldersWithTodos(this.bucketId as string)
       this.fetchBucketTitle(this.bucketId as string)
+      this.fetchWorkfoldersWithTodos(this.bucketId as string)
     }
   },
   computed: {
@@ -91,8 +96,8 @@ export default {
   watch: {
     bucketId(newBucketId, currBucketId) {
       if (newBucketId && newBucketId !== currBucketId) {
-        this.fetchWorkfoldersWithTodos(newBucketId)
         this.fetchBucketTitle(newBucketId)
+        this.fetchWorkfoldersWithTodos(newBucketId)
       }
     },
   },

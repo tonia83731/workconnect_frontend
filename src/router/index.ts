@@ -7,7 +7,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/HomeView.vue'),
+      component: () => import('@/views/HomeView.vue'),
       beforeEnter: async (to, from, next) => {
         const token = localStorage.getItem('memberToken')
         const authStore = useAuthStore()

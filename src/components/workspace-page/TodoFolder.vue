@@ -1,24 +1,22 @@
 <script lang="ts">
-import Multiselect from 'vue-multiselect'
 import type { TodoFormatedType } from '@/types/todos'
 import { getWorkspaceMembers } from '@/api/workspace'
-import { convertTimeToTimestamp } from '@/helpers/formatedTime'
-import TrashIcon from '../icons/TrashIcon.vue'
-import TodoItem from './TodoItem.vue'
 import { useFolderStore } from '@/stores/folders'
-import { toast } from 'vue3-toastify'
+import TrashIcon from '../icons/TrashIcon.vue'
 import type { MemberType } from '@/types/members'
-// import { VueDraggable } from 'vue-draggable-plus'
-// import { getWorkfolderTodos } from '@/api/todo'
+import { VueDraggable } from 'vue-draggable-plus'
+
+import TodoItem from './TodoItem.vue'
+import CreateTodoForm from './CreateTodoForm.vue'
 
 const folderStore = useFolderStore()
 
 export default {
   components: {
     TrashIcon,
-    Multiselect,
+    CreateTodoForm,
     TodoItem,
-    // draggable: VueDraggable,
+    VueDraggable
   },
   props: {
     id: {
@@ -37,6 +35,7 @@ export default {
   },
   data() {
     return {
+      localTodos: [] as TodoFormatedType[],
       // todos: [] as TodoFormatedType[],
       memberOpts: [],
       folderTitle: this.title,
@@ -92,43 +91,56 @@ export default {
     handleDeletedFolder() {
       folderStore.onDeletedFolder(this.id)
     },
-    handleCreatedToggle() {
-      this.createdToggle = !this.createdToggle
-      if (!this.createdToggle) {
-        this.todoTitle = ''
-        this.todoDeadline = null
-        this.todoAssign = []
+
+    // handleDragStart(evt: any) {
+    //   // Add dragging class for visual feedback
+    //   evt.item.classList.add('dragging')
+    // },
+
+    // handleDragEnd(evt: any) {
+    //   // Remove dragging class
+    //   evt.item.classList.remove('dragging')
+    // },
+    // handleDragStart(folderId: string, todo: TodoFormatedType, idx: number) {
+    //   folderStore.onDragDataSet(folderId, todo, idx)
+    // },
+    // handleDrop(folderId: string, todo: TodoFormatedType, idx: number) {
+    //   this.targetFolderId = folderId
+    //   this.targetIdx = idx
+
+    //   folderStore.onMovedTodo(folderId, idx)
+    // },
+    handleTodoUpdate(evt: any) {
+      // Handle reordering within the same folder
+      const { oldIndex, newIndex } = evt
+      console.log(oldIndex, newIndex, 'update')
+
+      const updated_orders = this.localTodos.map(todo => todo._id)
+      if (oldIndex !== newIndex) {
+        folderStore.onTodoPositionUpdate(this.id, updated_orders)
       }
     },
-    async handleCreatedTodo() {
-      const assignments = this.todoAssign.map((user) => ({ userId: user.userId }))
+    handleTodoAdd(evt: any) {
+      // Handle moving todo from one folder to another
+      const { newIndex, item } = evt
+      const todoId = item.getAttribute('data-id')
+      const sourceFolderId = item.getAttribute('data-folder-id')
+      console.log(newIndex, todoId, sourceFolderId, 'add')
 
-      const body = {
-        title: this.todoTitle,
-        deadline: convertTimeToTimestamp(this.todoDeadline),
-        assignments,
-      }
-
-      const results = await folderStore.onCreatedTodo(this.id, body)
-
-      if (results) {
-        this.createdToggle = false
-        this.todoTitle = ''
-        this.todoDeadline = null
-        this.todoAssign = []
-      } else {
-        toast.error('代辦事項建立失敗')
+      if (sourceFolderId !== this.id) {
+        // Moving between different folders
+        folderStore.onTodoFolderUpdate(sourceFolderId, this.id, todoId, newIndex)
       }
     },
-    handleDragStart(folderId: string, todo: TodoFormatedType, idx: number) {
-      folderStore.onDragDataSet(folderId, todo, idx)
-    },
-    handleDrop(folderId: string, todo: TodoFormatedType, idx: number) {
-      this.targetFolderId = folderId
-      this.targetIdx = idx
+    handleTodoRemove(evt: any) {
+      // const { oldIndex, item } = evt
+      // const todoId = item.getAttribute('data-id')
+      // console.log(oldIndex, todoId, 'remove')
 
-      folderStore.onMovedTodo(folderId, idx)
-    },
+      // Update the source folder's todo list
+      const {oldIndex} = evt
+      folderStore.onRemoveTodo(this.id, oldIndex)
+    }
   },
   mounted() {
     if (this.workspaceAccount) {
@@ -139,9 +151,9 @@ export default {
     workspaceAccount() {
       return this.$route.params.account
     },
-    minDate() {
-      return new Date().toISOString().split('T')[0]
-    },
+    // minDate() {
+    //   return new Date().toISOString().split('T')[0]
+    // },
     todoLength() {
       const folders = folderStore.folders
       const folder = folders.find((folder) => folder._id === this.id)
@@ -149,18 +161,13 @@ export default {
     },
   },
   watch: {
-    // todos: {
-    //   handler(newTodos) {
-    //     this.localTodos = [...newTodos]
-    //   },
-    //   deep: true,
-    // },
-    // localTodos: {
-    //   handler(newList) {
-    //     this.$emit('update:todos', newList)
-    //   },
-    //   deep: true,
-    // },
+    todos: {
+      handler(newTodos) {
+        this.localTodos = [...newTodos]
+      },
+      immediate: true,
+      deep: true
+    },
   },
 }
 </script>
@@ -181,58 +188,28 @@ export default {
         <TrashIcon class="w-4 h-4" />
       </button>
     </div>
-    <!-- {{ localTodos }} -->
-    <div class="flex flex-col gap-2">
-      <button
-        @click="handleCreatedToggle"
-        class="px-4 h-10 w-full rounded-md flex justify-center items-center font-bold"
-        :class="
-          createdToggle
-            ? 'bg-ocean-teal text-white'
-            : 'border text-ocean-teal-60 border-ocean-teal-60 border-dashed hover:border-ocean-teal hover:text-ocean-teal'
-        "
-      >
-        + 新增代辦事項
-      </button>
-      <div class="bg-white" v-if="createdToggle">
-        <div class="px-4 py-2 flex flex-col gap-2">
-          <input
-            v-model="todoTitle"
-            type="text"
-            class="w-full h-10 px-2 focus:border-b focus:border-midnight-forest bg-pale-aqua placeholder:text-sm"
-            placeholder="輸入代辦事項"
-          />
-          <input
-            v-model="todoDeadline"
-            type="date"
-            :min="minDate"
-            class="w-full h-10 px-2 focus:border-b focus:border-midnight-forest bg-pale-aqua placeholder:text-sm"
-            placeholder="輸入截止日期"
-          />
-          <Multiselect
-            v-model="todoAssign"
-            track-by="userId"
-            label="name"
-            :options="memberOpts"
-            :multiple="true"
-            placeholder="請指派人選"
-            class="bg-pale-aqua"
-          >
-          </Multiselect>
-        </div>
-        <button @click="handleCreatedTodo" class="w-full h-8 bg-golder-amber text-white">
-          新增
-        </button>
-      </div>
-    </div>
-    <div class="flex flex-col gap-2">
+    <CreateTodoForm
+      :folderId="id"
+      :options="memberOpts"
+    />
+    <VueDraggable
+      v-model="localTodos"
+      class="flex flex-col gap-2 h-full"
+      group="todo"
+      @update="handleTodoUpdate"
+      @add="handleTodoAdd"
+      @remove="handleTodoRemove"
+      :animation="150"
+      ghost-class="ghost"
+      drag-class="dragging"
+      handle=".todo-item"
+    >
       <div
-        v-for="(todo, index) in todos"
+        v-for="todo in localTodos"
         :key="todo._id"
-        :draggable="true"
-        @dragstart="handleDragStart(id, todo, index)"
-        @dragover.prevent
-        @drop="handleDrop(id, todo, index)"
+        class="todo-item"
+        :data-id="todo._id"
+        :data-folder-id="todo.workfolderId"
       >
         <TodoItem
           :id="todo._id"
@@ -245,69 +222,22 @@ export default {
           :memberOpts="memberOpts"
         />
       </div>
-    </div>
-    <!-- <draggable
-      v-model="localTodos"
-      group="todos"
-      class="flex flex-col gap-2"
-      @update="onUpdated"
-      @add="onAdd"
-      @remove="onRemove"
-      @end="ondragend"
-      item-key="_id"
-    >
-      <TodoItem
-        v-for="todo in localTodos"
-        :key="todo._id"
-        :id="todo._id"
-        :folderId="todo.workfolderId"
-        :title="todo.title"
-        :status="todo.status"
-        :checklists="todo.checklists"
-        :assignments="todo.assignments"
-        :deadline="todo.deadline"
-        :memberOpts="memberOpts"
-      />
-    </draggable> -->
+    </VueDraggable>
   </div>
 </template>
 
-<!-- <div class="flex flex-col gap-2">
-      <TodoItem
-        v-for="todo in todos"
-        :key="todo._id"
-        :id="todo._id"
-        :folderId="todo.workfolderId"
-        :title="todo.title"
-        :status="todo.status"
-        :checklists="todo.checklists"
-        :assignments="todo.assignments"
-        :deadline="todo.deadline"
-        :memberOpts="memberOpts"
-      />
-    </div> -->
+<style scoped>
+.ghost {
+  opacity: 0.5;
+  background: #c8ebfb;
+}
 
-<!-- <VueDraggable
-      v-model="localTodos"
-      :group="{ name: 'todos', pull: true, put: true }"
-      class="flex flex-col gap-2"
-      @update="onUpdated(id)"
-      @add="onAdd(id)"
-      @remove="onRemove(id)"
-      @start="onDragStart"
-      @end="onDragEnd"
-      :id="id"
-    >
-      <TodoItem
-        v-for="todo in todos"
-        :key="todo._id"
-        :id="todo._id"
-        :folderId="todo.workfolderId"
-        :title="todo.title"
-        :status="todo.status"
-        :checklists="todo.checklists"
-        :assignments="todo.assignments"
-        :deadline="todo.deadline"
-        :memberOpts="memberOpts"
-      />
-    </VueDraggable> -->
+.dragging {
+  cursor: move;
+  opacity: 0.8;
+}
+
+.todo-item {
+  cursor: move;
+}
+</style>
