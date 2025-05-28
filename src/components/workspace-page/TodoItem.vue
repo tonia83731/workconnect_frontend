@@ -25,6 +25,7 @@ export default {
     CheckSolidCircleIcon,
     ModalLayout,
     Multiselect,
+    // TodoItemModal,
   },
   props: {
     id: {
@@ -229,10 +230,10 @@ export default {
 </script>
 
 <template>
-  <div class="shadow-md bg-white rounded-sm w-full">
+  <div @click="handleTodoToggle(id as string)" class="shadow-md bg-white rounded-sm w-full">
     <!-- title -->
     <div class="flex justify-between items-center h-10 px-4">
-      <button @click="handleTodoToggle(id as string)" class="font-medium truncate">
+      <button class="font-medium truncate">
         {{ title }}
       </button>
       <button class="opacity-0 hover:opacity-100" @click="(e) => handleDeleteTodo(e, id as string)">
@@ -264,7 +265,8 @@ export default {
       </div>
     </div>
   </div>
-  <ModalLayout title="代辦事項" :toggle="todoToggle" @update:toggle="handleClosedTodoToggle">
+  <!-- <TodoItemModal /> -->
+  <ModalLayout title="代辦事項" :toggle="todoToggle" modalSize="w-[90%] max-w-[840px] h-full max-h-[560px]" contentSize="h-full max-h-[500px] p-6"  @update:toggle="handleClosedTodoToggle">
     <template #modal>
       <div class="flex flex-col gap-8">
         <div class="flex justify-between items-center gap-2">
@@ -332,6 +334,7 @@ export default {
             rows="4"
           ></textarea>
         </div>
+        <!-- todo checklists -->
         <div class="flex flex-col gap-1">
           <h5 :class="label_class">TODO</h5>
           <div class="flex flex-col gap-1 text-sm text-muted-gray">
@@ -359,6 +362,12 @@ export default {
                   :class="checklist?.isChecked && 'line-through'"
                   :disabled="checklist?.isChecked"
                   @change="(e) => handleUpdateText(e, checklist?._id)"
+                  @keydown.enter="(e: KeyboardEvent) => {
+                    e.preventDefault()
+                    handleUpdateText(e, checklist?._id)
+                    const target = e.target as HTMLInputElement
+                    if (target) target.blur()
+                  }"
                 />
               </label>
               <button
@@ -373,6 +382,12 @@ export default {
               <input
                 v-model="checklistText"
                 @blur="handleAddTodoChecklist"
+                @keydown.enter="(e: KeyboardEvent) => {
+                  e.preventDefault()
+                  handleAddTodoChecklist()
+                  const target = e.target as HTMLInputElement
+                  if (target) target.blur()
+                }"
                 type="text"
                 placeholder="請輸入TODO項目"
                 class="w-full h-full focus:px-2 focus:border-b focus:border-midnight-forest focus:bg-pale-aqua"

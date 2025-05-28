@@ -12,6 +12,18 @@ export default {
     toggle: {
       type: Boolean,
     },
+    modalSize: {
+      type: String,
+      default: 'w-1/2 max-h-[400px]'
+    },
+    contentSize: {
+      type: String,
+      default: 'px-4 py-2 h-full max-h-[360px]'
+    }
+    // height: {
+    //   type: String,
+    //   default: 'max-h-[400px]'
+    // }
   },
   emit: ['update:toggle'],
   data() {
@@ -21,7 +33,10 @@ export default {
   },
   methods: {
     handleToggleClickOutside(event: MouseEvent) {
-      if (this.modalRef && !this.modalRef.contains(event.target as Node)) {
+      const target = event.target as HTMLElement
+      const modalEl = this.$refs.modalRef as HTMLElement | undefined
+
+      if (modalEl && !modalEl.contains(target)) {
         this.$emit('update:toggle', false)
       }
     },
@@ -39,11 +54,15 @@ export default {
   <div
     v-if="toggle"
     class="fixed top-0 left-0 z-[999] w-full h-screen bg-dark-60 flex justify-center items-center"
+    @click.self="$emit('update:toggle', false)"
   >
     <div class="w-full h-screen relative">
       <div
         ref="modalRef"
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md w-1/2 max-h-[400px]"
+        :class="[
+          'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-md',
+          modalSize
+        ]"
       >
         <div
           class="h-10 flex justify-between items-center py-1 px-4 rounded-t-md bg-midnight-forest text-white"
@@ -54,7 +73,10 @@ export default {
           </button>
         </div>
         <div
-          class="px-4 py-2 h-full max-h-[360px] overflow-y-auto overflow-x-hidden scroll"
+          :class="[
+            'overflow-y-auto overflow-x-hidden scroll',
+            contentSize
+          ]"
           @click.stop
         >
           <slot name="modal"></slot>
