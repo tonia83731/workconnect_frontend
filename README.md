@@ -11,7 +11,7 @@
 
 ## DEMO
 
-- 前端開發連結請參考[這裡](workconnect-frontend-omega.vercel.app)
+- 前端開發連結請參考[這裡](https://workconnect-frontend-omega.vercel.app/auth/login)
 - 後端開發使用Nodejs + Expressjs + Mongodb，相關資訊請參考:
   - CODING: [https://github.com/tonia83731/workconnect_backend](https://github.com/tonia83731/workconnect_backend)
   - DOCUMENTS: [https://github.com/tonia83731/workconnect_backend_docs](https://github.com/tonia83731/workconnect_backend_docs)
